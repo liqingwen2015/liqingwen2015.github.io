@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/docker-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/docker-16x16.png">
+  <link rel="mask-icon" href="/images/docker.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.669.icu","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":true,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true},"motion":{"enable":true,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="简介 LINQ：语言集成查询，是 Language INtegrated Query 的缩写。 集成查询：为查询跨各种数据源和格式的数据提供了一致的模型。 语言集成查询：由于这种查询并没有创造新的语言而只是在现有的语言基础上来进行实现。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LINQ 基础">
+<meta property="og:url" content="http://blog.669.icu/2020/01/11/CSharp/LINQ%20%E5%9F%BA%E7%A1%80/index.html">
+<meta property="og:site_name" content="反骨仔">
+<meta property="og:description" content="简介 LINQ：语言集成查询，是 Language INtegrated Query 的缩写。 集成查询：为查询跨各种数据源和格式的数据提供了一致的模型。 语言集成查询：由于这种查询并没有创造新的语言而只是在现有的语言基础上来进行实现。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-01-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-17T04:39:09.794Z">
+<meta property="article:author" content="反骨仔">
+<meta property="article:tag" content="linq">
+<meta property="article:tag" content="C#">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://blog.669.icu/2020/01/11/CSharp/LINQ%20%E5%9F%BA%E7%A1%80/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>LINQ 基础 | 反骨仔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="反骨仔" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">反骨仔</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">一个业余的 .NET Core 攻城狮</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/liqingwen2015" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://blog.669.icu/2020/01/11/CSharp/LINQ%20%E5%9F%BA%E7%A1%80/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+      <meta itemprop="name" content="反骨仔">
+      <meta itemprop="description" content="一个业余的 .NET Core 攻城狮">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="反骨仔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LINQ 基础
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-11 00:00:00" itemprop="dateCreated datePublished" datetime="2020-01-11T00:00:00+08:00">2020-01-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-01-17 12:39:09" itemprop="dateModified" datetime="2021-01-17T12:39:09+08:00">2021-01-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/C/" itemprop="url" rel="index"><span itemprop="name">C#</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1>简介</h1>
+<p><strong>LINQ</strong>：<strong>语言集成查询</strong>，是 <strong>L</strong>anguage <strong>IN</strong>tegrated <strong>Q</strong>uery 的缩写。</p>
+<p><strong>集成查询</strong>：为查询跨各种数据源和格式的数据提供了一致的模型。</p>
+<p><strong>语言集成查询</strong>：由于这种查询并没有创造新的语言而只是在现有的语言基础上来进行实现。</p>
+<a id="more"></a>
+<h1>基础知识</h1>
+<h2 id="特点">特点</h2>
+<ul>
+<li>LINQ 主要用于对集合（含 IEnumerate、ICollection 等）进行操作</li>
+<li>通过扩展方法达到目的</li>
+</ul>
+<h2 id="按功能划分">按功能划分</h2>
+<ol>
+<li>
+<p>LINQ to Object：查询内存集合。</p>
+</li>
+<li>
+<p>LINQ to Provider：查询自定义数据源。</p>
+<p>XML、JSON 等都可以作为 Provider 对应的数据源，数据源对应的 LINQ 查询叫 LINQ to &lt;数据源&gt;。</p>
+<p>比如：LINQ to XML。</p>
+</li>
+</ol>
+<h2 id="按语法划分">按语法划分</h2>
+<ol>
+<li>SQL 风格</li>
+<li>函数风格</li>
+</ol>
+<h3 id="SQL-风格">SQL 风格</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> list = <span class="keyword">from</span> user <span class="keyword">in</span> users</span><br><span class="line">  <span class="keyword">where</span> user.Name.Contains(<span class="string">&quot;Wang&quot;</span>)</span><br><span class="line">  <span class="keyword">select</span> user.Id;</span><br></pre></td></tr></table></figure>
+<h3 id="函数风格">函数风格</h3>
+<p>效果同上。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> list = users</span><br><span class="line">  .Where(u =&gt; user.Name.Contains(<span class="string">&quot;Wang&quot;</span>))</span><br><span class="line">  .Select(u =&gt; u.id);</span><br></pre></td></tr></table></figure>
+<h1>方法运用</h1>
+<h2 id="First、Last-和-Single-等">First、Last 和 Single 等</h2>
+<ul>
+<li>
+<p>First、FirstOrDefault、Last、LastOrDefault、Single 和 SingleOrDefault 是快速查询集合中的第一个或最后一个元素的方法</p>
+</li>
+<li>
+<p>如果集合是空的，First、Last 和 Single 都会报错，这时可以使用 FirstOrDefault、LastOrDefault 和 SingleOrDefault</p>
+</li>
+<li>
+<p>Single/SingleOrDefault 和其它方法的区别是，它限定查询结果只有一个元素，如果查询结果集合中包含多个元素时会报错</p>
+</li>
+</ul>
+<h3 id="示例">示例</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span>[] &#123; <span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span> &#125;.First(x =&gt; x.Equals(<span class="string">&quot;b&quot;</span>)); <span class="comment">// 返回 ”b“</span></span><br><span class="line"><span class="keyword">new</span>[] &#123; <span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span> &#125;.First(x =&gt; x.Equals(<span class="string">&quot;c&quot;</span>)); <span class="comment">// 抛出 InvalidOperationException 异常</span></span><br><span class="line"><span class="keyword">new</span>[] &#123; <span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span> &#125;.FirstOrDefault(x =&gt; x.Equals(<span class="string">&quot;c&quot;</span>)); <span class="comment">// 返回 null</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span>[] &#123; <span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span> &#125;.Single(x =&gt; x.Equals(<span class="string">&quot;b&quot;</span>)); <span class="comment">// 返回 ”b“</span></span><br><span class="line"><span class="keyword">new</span>[] &#123; <span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span> &#125;.Single(x =&gt; x.Equals(<span class="string">&quot;c&quot;</span>)); <span class="comment">// 抛出 InvalidOperationException 异常</span></span><br><span class="line"><span class="keyword">new</span>[] &#123; <span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span> &#125;.SingleOrDefault(x =&gt; x.Equals(<span class="string">&quot;c&quot;</span>)); <span class="comment">// 返回 null</span></span><br><span class="line"><span class="keyword">new</span>[] &#123; <span class="string">&quot;a&quot;</span>, <span class="string">&quot;a&quot;</span> &#125;.Single(); <span class="comment">// 抛出 InvalidOperationException 异常</span></span><br></pre></td></tr></table></figure>
+<h3 id="备注">备注</h3>
+<ul>
+<li>如果要确保查询结果的唯一性（比如通过手机号查询用户），建议使用 Single/SingleOrDefaut</li>
+<li>如果只是判断元素是否存在，使用 Any 比 FirstOrDefault 更高效</li>
+<li>其它情况应尽量使用 First/FirstOrDefault</li>
+</ul>
+<h2 id="Except-取差集">Except 取差集</h2>
+<p>取出集合中与另一个集合所有元素中不同的元素。</p>
+<h3 id="示例-2">示例</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[] first = &#123; <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span> &#125;;</span><br><span class="line"><span class="built_in">int</span>[] second = &#123; <span class="number">0</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span> &#125;;</span><br><span class="line">IEnumerable&lt;<span class="built_in">int</span>&gt; result = first.Except(second);</span><br><span class="line"><span class="comment">// result = &#123; 1, 4 &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">int</span>[] second = &#123; <span class="number">0</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span> &#125;;</span><br><span class="line"><span class="built_in">int</span>[] third = &#123; <span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span> &#125;;</span><br><span class="line">IEnumerable&lt;<span class="built_in">int</span>&gt; result = third.Except(second);</span><br><span class="line"><span class="comment">// result = &#123; 1, 4 &#125;</span></span><br></pre></td></tr></table></figure>
+<h3 id="注意">注意</h3>
+<ul>
+<li>Except 方法会去除重复元素</li>
+</ul>
+<h2 id="SelectMany-集合降维">SelectMany 集合降维</h2>
+<p>把多维集合降维，比如把二维的集合平铺成一个一维的集合。</p>
+<h3 id="示例-3">示例</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> collection = <span class="keyword">new</span> <span class="built_in">int</span>[][]</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>&#125;,</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">var</span> result = collection.SelectMany(x =&gt; x);</span><br><span class="line"><span class="comment">// result = [1, 2, 3, 4, 5, 6]</span></span><br></pre></td></tr></table></figure>
+<h3 id="示例-2-迪卡尔积运算">示例 2 - 迪卡尔积运算</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> list1 = <span class="keyword">new</span> List&lt;<span class="built_in">string</span>&gt; &#123; <span class="string">&quot;a1&quot;</span>, <span class="string">&quot;a2&quot;</span> &#125;;</span><br><span class="line"><span class="keyword">var</span> list2 = <span class="keyword">new</span> List&lt;<span class="built_in">string</span>&gt; &#123; <span class="string">&quot;b1&quot;</span>, <span class="string">&quot;b2&quot;</span>, <span class="string">&quot;b3&quot;</span> &#125;;</span><br><span class="line"><span class="keyword">var</span> result = list1.SelectMany(x =&gt; list2.Select(y =&gt; <span class="string">$&quot;<span class="subst">&#123;x&#125;</span><span class="subst">&#123;y&#125;</span>&quot;</span>));</span><br><span class="line"><span class="comment">// result = [&quot;a1b1&quot;, &quot;a1b2&quot;, &quot;a1b3&quot;, &quot;a2b1&quot;, &quot;a2b2&quot;, &quot;a2b3&quot;]</span></span><br></pre></td></tr></table></figure>
+<h2 id="Aggregate-聚合">Aggregate 聚合</h2>
+<p>对一个集合依次执行类似累加器的操作，就像滚雪球一样把数据逐步聚集在一起。</p>
+<h3 id="示例：累加">示例：累加</h3>
+<p>从 1 加到 10。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[] numbers = &#123; <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span> &#125;;</span><br><span class="line"><span class="built_in">int</span> sum = numbers.Aggregate((prevSum, current) =&gt; prevSum + current);</span><br><span class="line"><span class="comment">// sum = 55</span></span><br></pre></td></tr></table></figure>
+<h3 id="示例：拼接字符串">示例：拼接字符串</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">string</span>[] stringList = &#123; <span class="string">&quot;Hello&quot;</span>, <span class="string">&quot;World&quot;</span>, <span class="string">&quot;!&quot;</span> &#125;;</span><br><span class="line"><span class="built_in">string</span> joinedString = stringList.Aggregate((prev, current) =&gt; prev + <span class="string">&quot; &quot;</span> + current);</span><br><span class="line"><span class="comment">// joinedString = &quot;Hello World !&quot;</span></span><br></pre></td></tr></table></figure>
+<h2 id="Join-关联查询">Join 关联查询</h2>
+<p>和 SQL 查询一样，LINQ 同样支持 Inner Join、Left Join、Right Join、Cross Join 和 Full Outer Join。</p>
+<h3 id="示例-4">示例</h3>
+<p>数据源：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> first = <span class="keyword">new</span> List&lt;<span class="built_in">string</span>&gt;() &#123; <span class="string">&quot;a&quot;</span>,<span class="string">&quot;b&quot;</span>,<span class="string">&quot;c&quot;</span> &#125;; <span class="comment">// 左边</span></span><br><span class="line"><span class="keyword">var</span> second = <span class="keyword">new</span> List&lt;<span class="built_in">string</span>&gt;() &#123; <span class="string">&quot;a&quot;</span>, <span class="string">&quot;c&quot;</span>, <span class="string">&quot;d&quot;</span> &#125;; <span class="comment">// 右边</span></span><br></pre></td></tr></table></figure>
+<h4 id="Inner-Join">Inner Join</h4>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> result = <span class="keyword">from</span> f <span class="keyword">in</span> first</span><br><span class="line">              <span class="keyword">join</span> s <span class="keyword">in</span> second <span class="keyword">on</span> f <span class="keyword">equals</span> s</span><br><span class="line">              <span class="keyword">select</span> <span class="keyword">new</span> &#123; f, s &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 等同使用扩展方法：</span></span><br><span class="line"><span class="keyword">var</span> result = first.Join(second,</span><br><span class="line">    f =&gt; f,</span><br><span class="line">    s =&gt; s,</span><br><span class="line">    (f, s) =&gt; <span class="keyword">new</span> &#123; f, s &#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// result: &#123;&quot;a&quot;,&quot;a&quot;&#125;</span></span><br><span class="line"><span class="comment">//         &#123;&quot;c&quot;,&quot;c&quot;&#125;</span></span><br></pre></td></tr></table></figure>
+<h4 id="Left-Join">Left Join</h4>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> result = <span class="keyword">from</span> f <span class="keyword">in</span> first</span><br><span class="line">            <span class="keyword">join</span> s <span class="keyword">in</span> second <span class="keyword">on</span> f <span class="keyword">equals</span> s <span class="keyword">into</span> temp</span><br><span class="line">            <span class="keyword">from</span> t <span class="keyword">in</span> temp.DefaultIfEmpty()</span><br><span class="line">            <span class="keyword">select</span> <span class="keyword">new</span> &#123; First = f, Second = t &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 或者：</span></span><br><span class="line"><span class="keyword">var</span> result = <span class="keyword">from</span> f <span class="keyword">in</span> first</span><br><span class="line">            <span class="keyword">from</span> s <span class="keyword">in</span> second.Where(x =&gt; x == f).DefaultIfEmpty()</span><br><span class="line">            <span class="keyword">select</span> <span class="keyword">new</span> &#123; First = f, Second = s &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 等同使用扩展方法：</span></span><br><span class="line"><span class="keyword">var</span> result = first.GroupJoin(second,</span><br><span class="line">        f =&gt; f,</span><br><span class="line">        s =&gt; s,</span><br><span class="line">        (f, s) =&gt; <span class="keyword">new</span> &#123; First = f, Second = s &#125;)</span><br><span class="line">    .SelectMany(temp =&gt; temp.Second.DefaultIfEmpty(),</span><br><span class="line">        (f, s) =&gt; <span class="keyword">new</span> &#123; First = f.First, Second = s &#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// result: &#123;&quot;a&quot;,&quot;a&quot;&#125;</span></span><br><span class="line"><span class="comment">//         &#123;&quot;b&quot;, null&#125;</span></span><br><span class="line"><span class="comment">//         &#123;&quot;c&quot;,&quot;c&quot;&#125;</span></span><br></pre></td></tr></table></figure>
+<h4 id="Right-Join">Right Join</h4>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> result = <span class="keyword">from</span> s <span class="keyword">in</span> second</span><br><span class="line">            <span class="keyword">join</span> f <span class="keyword">in</span> first <span class="keyword">on</span> s <span class="keyword">equals</span> f <span class="keyword">into</span> temp</span><br><span class="line">            <span class="keyword">from</span> t <span class="keyword">in</span> temp.DefaultIfEmpty()</span><br><span class="line">            <span class="keyword">select</span> <span class="keyword">new</span> &#123; First = t, Second = s &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 其它和 Left Join 类似</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// result: &#123;&quot;a&quot;,&quot;a&quot;&#125;</span></span><br><span class="line"><span class="comment">//         &#123;&quot;c&quot;,&quot;c&quot;&#125;</span></span><br><span class="line"><span class="comment">//         &#123;null,&quot;d&quot;&#125;</span></span><br></pre></td></tr></table></figure>
+<h4 id="Cross-Join">Cross Join</h4>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> result = <span class="keyword">from</span> f <span class="keyword">in</span> first</span><br><span class="line">            <span class="keyword">from</span> s <span class="keyword">in</span> second</span><br><span class="line">            <span class="keyword">select</span> <span class="keyword">new</span> &#123; f, s &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// result: &#123;&quot;a&quot;,&quot;a&quot;&#125;</span></span><br><span class="line"><span class="comment">//         &#123;&quot;a&quot;,&quot;c&quot;&#125;</span></span><br><span class="line"><span class="comment">//         &#123;&quot;a&quot;,&quot;d&quot;&#125;</span></span><br><span class="line"><span class="comment">//         &#123;&quot;b&quot;,&quot;a&quot;&#125;</span></span><br><span class="line"><span class="comment">//         &#123;&quot;b&quot;,&quot;c&quot;&#125;</span></span><br><span class="line"><span class="comment">//         &#123;&quot;b&quot;,&quot;d&quot;&#125;</span></span><br><span class="line"><span class="comment">//         &#123;&quot;c&quot;,&quot;a&quot;&#125;</span></span><br><span class="line"><span class="comment">//         &#123;&quot;c&quot;,&quot;c&quot;&#125;</span></span><br><span class="line"><span class="comment">//         &#123;&quot;c&quot;,&quot;d&quot;&#125;</span></span><br></pre></td></tr></table></figure>
+<h4 id="Full-Outer-Join">Full Outer Join</h4>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> leftJoin = <span class="keyword">from</span> f <span class="keyword">in</span> first</span><br><span class="line">            <span class="keyword">join</span> s <span class="keyword">in</span> second <span class="keyword">on</span> f <span class="keyword">equals</span> s <span class="keyword">into</span> temp</span><br><span class="line">            <span class="keyword">from</span> t <span class="keyword">in</span> temp.DefaultIfEmpty()</span><br><span class="line">            <span class="keyword">select</span> <span class="keyword">new</span> &#123; First = f, Second = t &#125;;</span><br><span class="line"><span class="keyword">var</span> rightJoin = <span class="keyword">from</span> s <span class="keyword">in</span> second</span><br><span class="line">            <span class="keyword">join</span> f <span class="keyword">in</span> first <span class="keyword">on</span> s <span class="keyword">equals</span> f <span class="keyword">into</span> temp</span><br><span class="line">            <span class="keyword">from</span> t <span class="keyword">in</span> temp.DefaultIfEmpty()</span><br><span class="line">            <span class="keyword">select</span> <span class="keyword">new</span> &#123; First = t, Second = s &#125;;</span><br><span class="line"><span class="keyword">var</span> fullOuterJoin = leftJoin.Union(rightJoin);</span><br></pre></td></tr></table></figure>
+<h2 id="Skip-Take-分页">Skip &amp; Take 分页</h2>
+<ul>
+<li>
+<p>Skip 扩展方法用来跳过从起始位置开始的指定数量的元素读取集合</p>
+</li>
+<li>
+<p>Take 扩展方法用来从集合中只读取指定数量的元素</p>
+</li>
+</ul>
+<h3 id="示例-5">示例</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> values = <span class="keyword">new</span>[] &#123; <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span> &#125;;</span><br><span class="line"><span class="keyword">var</span> skipTwo = values.Skip(<span class="number">2</span>);  <span class="comment">// &#123; 3, 2, 1 &#125;</span></span><br><span class="line"><span class="keyword">var</span> takeThree = values.Take(<span class="number">3</span>);  <span class="comment">// &#123; 5, 4, 3 &#125;</span></span><br><span class="line"><span class="keyword">var</span> skipOneTakeTwo = values.Skip(<span class="number">1</span>).Take(<span class="number">2</span>); <span class="comment">// &#123; 4, 3 &#125;</span></span><br></pre></td></tr></table></figure>
+<h3 id="扩展-SkipWhile、TakeWhile">扩展 - SkipWhile、TakeWhile</h3>
+<ul>
+<li>SkipWhile 从起始位置开始忽略元素，直到遇到不符合条件的元素则停止忽略，往后就是要查询的结果</li>
+<li>TakeWhile 从起始位置开始读取符合条件的元素，一旦遇到不符合条件的就停止读取，即使后面还有符合条件的也不再读取</li>
+</ul>
+<h4 id="示例-6">示例</h4>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// SkipWhile </span></span><br><span class="line"><span class="built_in">int</span>[] list = &#123; <span class="number">42</span>, <span class="number">42</span>, <span class="number">6</span>, <span class="number">6</span>, <span class="number">6</span>, <span class="number">42</span> &#125;;</span><br><span class="line"><span class="keyword">var</span> result = list.SkipWhile(i =&gt; i == <span class="number">42</span>);</span><br><span class="line"><span class="comment">// result: 6, 6, 6, 42</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// TakeWhile </span></span><br><span class="line"><span class="built_in">int</span>[] list = &#123; <span class="number">1</span>, <span class="number">10</span>, <span class="number">40</span>, <span class="number">50</span>, <span class="number">44</span>, <span class="number">70</span>, <span class="number">4</span> &#125;;</span><br><span class="line"><span class="keyword">var</span> result = list.TakeWhile(item =&gt; item &lt; <span class="number">50</span>).ToList();</span><br><span class="line"><span class="comment">// result = &#123; 1, 10, 40 &#125;</span></span><br></pre></td></tr></table></figure>
+<h2 id="Zip-拉链">Zip 拉链</h2>
+<p>操作的对象是两个集合，它就像拉链一样，根据位置将两个系列中的每个元素依次配对在一起。</p>
+<h3 id="示例-7">示例</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[] numbers = &#123; <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span> &#125;;</span><br><span class="line"><span class="built_in">string</span>[] words = &#123; <span class="string">&quot;three&quot;</span>, <span class="string">&quot;five&quot;</span>, <span class="string">&quot;seven&quot;</span>, <span class="string">&quot;ignored&quot;</span> &#125;;</span><br><span class="line">IEnumerable&lt;<span class="built_in">string</span>&gt; zip = numbers.Zip(words, (n, w) =&gt; n + <span class="string">&quot;=&quot;</span> + w);</span><br><span class="line"></span><br><span class="line"><span class="keyword">foreach</span> (<span class="built_in">string</span> s <span class="keyword">in</span> zip)</span><br><span class="line">&#123;</span><br><span class="line">    Console.WriteLine(s);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出</span></span><br><span class="line"><span class="comment">// 3=three</span></span><br><span class="line"><span class="comment">// 5=five</span></span><br><span class="line"><span class="comment">// 7=seven</span></span><br></pre></td></tr></table></figure>
+<h2 id="OfType-和-Cast-类型过滤与转换">OfType 和 Cast 类型过滤与转换</h2>
+<ul>
+<li>OfType 用于筛选集合中指定类型的元素</li>
+<li>Cast 可以把集合转换为指定类型</li>
+</ul>
+<h3 id="示例-8">示例</h3>
+<p>数据源：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title">IFoo</span> &#123; &#125;</span><br><span class="line"><span class="keyword">class</span> <span class="title">Foo</span> : <span class="title">IFoo</span> &#123; &#125;</span><br><span class="line"><span class="keyword">class</span> <span class="title">Bar</span> : <span class="title">IFoo</span> &#123; &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> item0 = <span class="keyword">new</span> Foo();</span><br><span class="line"><span class="keyword">var</span> item1 = <span class="keyword">new</span> Foo();</span><br><span class="line"><span class="keyword">var</span> item2 = <span class="keyword">new</span> Bar();</span><br><span class="line"><span class="keyword">var</span> item3 = <span class="keyword">new</span> Bar();</span><br><span class="line"><span class="keyword">var</span> collection = <span class="keyword">new</span> IFoo[] &#123; item0, item1, item2, item3 &#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="OfType-示例">OfType 示例</h4>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> foos = collection.OfType&lt;Foo&gt;(); <span class="comment">// result: item0, item1</span></span><br><span class="line"><span class="keyword">var</span> bars = collection.OfType&lt;Bar&gt;(); <span class="comment">// result: item2, item3</span></span><br><span class="line"><span class="keyword">var</span> foosAndBars = collection.OfType&lt;IFoo&gt;(); <span class="comment">// result: item0, item1, item2, item3</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 等同于使用 Where</span></span><br><span class="line"><span class="keyword">var</span> foos = collection.Where(item =&gt; item <span class="keyword">is</span> Foo); <span class="comment">// result: item0, item1</span></span><br><span class="line"><span class="keyword">var</span> bars = collection.Where(item =&gt; item <span class="keyword">is</span> Bar); <span class="comment">// result: item2, item3</span></span><br></pre></td></tr></table></figure>
+<h4 id="Cast-示例">Cast 示例</h4>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> bars = collection.Cast&lt;Bar&gt;();  <span class="comment">// InvalidCastException 异常</span></span><br><span class="line"><span class="keyword">var</span> foos = collection.Cast&lt;Foo&gt;();  <span class="comment">// InvalidCastException 异常</span></span><br><span class="line"><span class="keyword">var</span> foosAndBars = collection.Cast&lt;IFoo&gt;();  <span class="comment">// OK</span></span><br></pre></td></tr></table></figure>
+<h2 id="ToLookup-索引式查找">ToLookup 索引式查找</h2>
+<p>可索引查找的数据结构，它是一个 ILookup 实例，所有元素根据指定的键进行分组并可以按键进行索引。</p>
+<h3 id="示例-9">示例</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">string</span>[] array = &#123; <span class="string">&quot;one&quot;</span>, <span class="string">&quot;two&quot;</span>, <span class="string">&quot;three&quot;</span> &#125;;</span><br><span class="line"><span class="comment">// 根据元素字符串长度创建一个查找对象</span></span><br><span class="line"><span class="keyword">var</span> lookup = array.ToLookup(item =&gt; item.Length);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 查找字符串长度为 3 的元素</span></span><br><span class="line"><span class="keyword">var</span> result = lookup[<span class="number">3</span>];</span><br><span class="line"><span class="comment">// result: one,two</span></span><br></pre></td></tr></table></figure>
+<h3 id="示例二">示例二</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[] array = &#123; <span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span> &#125;;</span><br><span class="line"><span class="comment">// 创建一个奇偶查找（键为 0 和 1）</span></span><br><span class="line"><span class="keyword">var</span> lookup = array.ToLookup(item =&gt; item % <span class="number">2</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 查找偶数</span></span><br><span class="line"><span class="keyword">var</span> even = lookup[<span class="number">0</span>];</span><br><span class="line"><span class="comment">// even: 2,4,6,8</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 查找奇数</span></span><br><span class="line"><span class="keyword">var</span> odd = lookup[<span class="number">1</span>];</span><br><span class="line"><span class="comment">// odd: 1,3,5,7</span></span><br></pre></td></tr></table></figure>
+<h2 id="Distinct-去重">Distinct 去重</h2>
+<p>去除重复项。</p>
+<h3 id="示例-10">示例</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[] array = &#123; <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">2</span>, <span class="number">5</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">2</span> &#125;;</span><br><span class="line"><span class="keyword">var</span> distinct = array.Distinct();</span><br><span class="line"><span class="comment">// distinct = &#123; 1, 2, 3, 4, 5 &#125;</span></span><br></pre></td></tr></table></figure>
+<h2 id="ToDictionary-字典转换">ToDictionary 字典转换</h2>
+<p>把集合 <code>IEnumerable&lt;TElement&gt;</code> 转换为 <code>Dictionary&lt;TKey, TValue&gt;</code> 结构的字典，接收一个 <code>Func&lt;TSource, TKey&gt;</code> 参数用来返回每个元素指定的键与值。</p>
+<h3 id="示例-11">示例</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">IEnumerable&lt;User&gt; users = GetUsers();</span><br><span class="line">Dictionary&lt;<span class="built_in">int</span>, User&gt; usersById = users.ToDictionary(x =&gt; x.Id);</span><br></pre></td></tr></table></figure>
+<h2 id="Range-和-Repeat">Range 和 Repeat</h2>
+<p>用于生成简单的数字或字符串系列。</p>
+<h3 id="示例-12">示例</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 生成 1-100 的数字，即结果为 [1, 2, ..., 99, 100]</span></span><br><span class="line"><span class="keyword">var</span> range = Enumerable.Range(<span class="number">1</span>, <span class="number">100</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 生成三个重复的字符串“a”，即结果为 [&quot;a&quot;, &quot;a&quot;, &quot;a&quot;]</span></span><br><span class="line"><span class="keyword">var</span> repeatedValues = Enumerable.Repeat(<span class="string">&quot;a&quot;</span>, <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
+<h2 id="Any-和-All">Any 和 All</h2>
+<ul>
+<li>Any 用来判断集合中是否存在任一一个元素符合条件</li>
+<li>All 用来判断集合中是否所有元素符合条件</li>
+</ul>
+<h3 id="示例-13">示例</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> numbers = <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span> &#125;;</span><br><span class="line"><span class="built_in">bool</span> result = numbers.Any(); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">bool</span> result = numbers.Any(x =&gt; x == <span class="number">6</span>); <span class="comment">// false</span></span><br><span class="line"><span class="built_in">bool</span> result = numbers.All(x =&gt; x &gt; <span class="number">0</span>); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">bool</span> result = numbers.All(x =&gt; x &gt; <span class="number">1</span>); <span class="comment">// false</span></span><br></pre></td></tr></table></figure>
+<h2 id="Concat-和-Union">Concat 和 Union</h2>
+<p>用来拼接两个集合。</p>
+<ul>
+<li>Concat：不会去除重复元素</li>
+<li>Union：去除重复项</li>
+</ul>
+<h3 id="示例-14">示例</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">List&lt;<span class="built_in">int</span>&gt; foo = newList&lt;<span class="built_in">int</span>&gt; &#123; <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span> &#125;;</span><br><span class="line">List&lt;<span class="built_in">int</span>&gt; bar = newList&lt;<span class="built_in">int</span>&gt; &#123; <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 通过 Enumerable 类的静态方法</span></span><br><span class="line"><span class="keyword">var</span> result = Enumerable.Concat(foo, bar).ToList(); <span class="comment">// 1,2,3,3,4,5</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 通过扩展方法</span></span><br><span class="line"><span class="keyword">var</span> result = foo.Concat(bar).ToList(); <span class="comment">// 1,2,3,3,4,5</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> result = foo.Union(bar); <span class="comment">// 1,2,3,4,5</span></span><br></pre></td></tr></table></figure>
+<h2 id="GroupBy-分组">GroupBy 分组</h2>
+<p>对集合进行分组。</p>
+<h3 id="示例-15">示例</h3>
+<p>根据奇偶分组。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> list = <span class="keyword">new</span> List&lt;<span class="built_in">int</span>&gt;() &#123; <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span> &#125;;</span><br><span class="line"><span class="keyword">var</span> grouped = list.GroupBy(x =&gt; x % <span class="number">2</span> == <span class="number">0</span>);</span><br><span class="line"><span class="comment">// grouped: [1, 3, 5, 7, 9] 和 [2, 4, 6, 8]</span></span><br></pre></td></tr></table></figure>
+<h2 id="DefaultIfEmpty-空替换">DefaultIfEmpty 空替换</h2>
+<p>表示在没有查询到指定条件的元素时使用元素的默认值代替。</p>
+<h3 id="示例-16">示例</h3>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> chars = <span class="keyword">new</span> List&lt;<span class="built_in">string</span>&gt;() &#123; <span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>, <span class="string">&quot;c&quot;</span>, <span class="string">&quot;d&quot;</span> &#125;;</span><br><span class="line">chars.Where(s =&gt; s.Length &gt; <span class="number">1</span>).DefaultIfEmpty().First(); <span class="comment">// 返回 null</span></span><br><span class="line">chars.DefaultIfEmpty(<span class="string">&quot;N/A&quot;</span>).FirstOrDefault(); <span class="comment">// 返回 &quot;a&quot;</span></span><br><span class="line">chars.Where(s =&gt; s.Length &gt; <span class="number">1</span>).DefaultIfEmpty(<span class="string">&quot;N/A&quot;</span>).FirstOrDefault(); <span class="comment">// 返回 &quot;N/A&quot;</span></span><br></pre></td></tr></table></figure>
+<h2 id="SequenceEqual-集合相等">SequenceEqual 集合相等</h2>
+<p>用于比较集合系列各个相同位置的元素是否相等。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[] a = <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;;</span><br><span class="line"><span class="built_in">int</span>[] b = <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;;</span><br><span class="line"><span class="built_in">int</span>[] c = <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">1</span>, <span class="number">3</span>, <span class="number">2</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">bool</span> result1 = a.SequenceEqual(b); <span class="comment">// true</span></span><br><span class="line"><span class="built_in">bool</span> result2 = a.SequenceEqual(c); <span class="comment">// false</span></span><br></pre></td></tr></table></figure>
+<h2 id="其它常用方法">其它常用方法</h2>
+<ul>
+<li>OrderBy（排序）</li>
+<li>Sum（求和）</li>
+<li>Count（计数）</li>
+<li>Reverse（反转）</li>
+<li>Where（筛选、过滤）</li>
+</ul>
+<h1>参考</h1>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/willick/p/13586024.html">08：强大的LINQ</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linq/" rel="tag"># linq</a>
+              <a href="/tags/C/" rel="tag"># C#</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/01%20HTTP%20%E5%8D%8F%E8%AE%AE%E5%92%8C%20Fiddle%20%E6%8A%93%E5%8C%85/" rel="prev" title="01 HTTP 协议和 Fiddle 抓包">
+      <i class="fa fa-chevron-left"></i> 01 HTTP 协议和 Fiddle 抓包
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/01/11/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%20Docker/05%20Docker%20%E5%BC%95%E6%93%8E/" rel="next" title="05 Docker 引擎">
+      05 Docker 引擎 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">基础知识</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%89%B9%E7%82%B9"><span class="nav-number">2.1.</span> <span class="nav-text">特点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%89%E5%8A%9F%E8%83%BD%E5%88%92%E5%88%86"><span class="nav-number">2.2.</span> <span class="nav-text">按功能划分</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%89%E8%AF%AD%E6%B3%95%E5%88%92%E5%88%86"><span class="nav-number">2.3.</span> <span class="nav-text">按语法划分</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#SQL-%E9%A3%8E%E6%A0%BC"><span class="nav-number">2.3.1.</span> <span class="nav-text">SQL 风格</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BD%E6%95%B0%E9%A3%8E%E6%A0%BC"><span class="nav-number">2.3.2.</span> <span class="nav-text">函数风格</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">方法运用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#First%E3%80%81Last-%E5%92%8C-Single-%E7%AD%89"><span class="nav-number">3.1.</span> <span class="nav-text">First、Last 和 Single 等</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B"><span class="nav-number">3.1.1.</span> <span class="nav-text">示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%87%E6%B3%A8"><span class="nav-number">3.1.2.</span> <span class="nav-text">备注</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Except-%E5%8F%96%E5%B7%AE%E9%9B%86"><span class="nav-number">3.2.</span> <span class="nav-text">Except 取差集</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-2"><span class="nav-number">3.2.1.</span> <span class="nav-text">示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F"><span class="nav-number">3.2.2.</span> <span class="nav-text">注意</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SelectMany-%E9%9B%86%E5%90%88%E9%99%8D%E7%BB%B4"><span class="nav-number">3.3.</span> <span class="nav-text">SelectMany 集合降维</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-3"><span class="nav-number">3.3.1.</span> <span class="nav-text">示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-2-%E8%BF%AA%E5%8D%A1%E5%B0%94%E7%A7%AF%E8%BF%90%E7%AE%97"><span class="nav-number">3.3.2.</span> <span class="nav-text">示例 2 - 迪卡尔积运算</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Aggregate-%E8%81%9A%E5%90%88"><span class="nav-number">3.4.</span> <span class="nav-text">Aggregate 聚合</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A%E7%B4%AF%E5%8A%A0"><span class="nav-number">3.4.1.</span> <span class="nav-text">示例：累加</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A%E6%8B%BC%E6%8E%A5%E5%AD%97%E7%AC%A6%E4%B8%B2"><span class="nav-number">3.4.2.</span> <span class="nav-text">示例：拼接字符串</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Join-%E5%85%B3%E8%81%94%E6%9F%A5%E8%AF%A2"><span class="nav-number">3.5.</span> <span class="nav-text">Join 关联查询</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-4"><span class="nav-number">3.5.1.</span> <span class="nav-text">示例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Inner-Join"><span class="nav-number">3.5.1.1.</span> <span class="nav-text">Inner Join</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Left-Join"><span class="nav-number">3.5.1.2.</span> <span class="nav-text">Left Join</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Right-Join"><span class="nav-number">3.5.1.3.</span> <span class="nav-text">Right Join</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Cross-Join"><span class="nav-number">3.5.1.4.</span> <span class="nav-text">Cross Join</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Full-Outer-Join"><span class="nav-number">3.5.1.5.</span> <span class="nav-text">Full Outer Join</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Skip-Take-%E5%88%86%E9%A1%B5"><span class="nav-number">3.6.</span> <span class="nav-text">Skip &amp; Take 分页</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-5"><span class="nav-number">3.6.1.</span> <span class="nav-text">示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%A9%E5%B1%95-SkipWhile%E3%80%81TakeWhile"><span class="nav-number">3.6.2.</span> <span class="nav-text">扩展 - SkipWhile、TakeWhile</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-6"><span class="nav-number">3.6.2.1.</span> <span class="nav-text">示例</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Zip-%E6%8B%89%E9%93%BE"><span class="nav-number">3.7.</span> <span class="nav-text">Zip 拉链</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-7"><span class="nav-number">3.7.1.</span> <span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#OfType-%E5%92%8C-Cast-%E7%B1%BB%E5%9E%8B%E8%BF%87%E6%BB%A4%E4%B8%8E%E8%BD%AC%E6%8D%A2"><span class="nav-number">3.8.</span> <span class="nav-text">OfType 和 Cast 类型过滤与转换</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-8"><span class="nav-number">3.8.1.</span> <span class="nav-text">示例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#OfType-%E7%A4%BA%E4%BE%8B"><span class="nav-number">3.8.1.1.</span> <span class="nav-text">OfType 示例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Cast-%E7%A4%BA%E4%BE%8B"><span class="nav-number">3.8.1.2.</span> <span class="nav-text">Cast 示例</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ToLookup-%E7%B4%A2%E5%BC%95%E5%BC%8F%E6%9F%A5%E6%89%BE"><span class="nav-number">3.9.</span> <span class="nav-text">ToLookup 索引式查找</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-9"><span class="nav-number">3.9.1.</span> <span class="nav-text">示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%E4%BA%8C"><span class="nav-number">3.9.2.</span> <span class="nav-text">示例二</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Distinct-%E5%8E%BB%E9%87%8D"><span class="nav-number">3.10.</span> <span class="nav-text">Distinct 去重</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-10"><span class="nav-number">3.10.1.</span> <span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ToDictionary-%E5%AD%97%E5%85%B8%E8%BD%AC%E6%8D%A2"><span class="nav-number">3.11.</span> <span class="nav-text">ToDictionary 字典转换</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-11"><span class="nav-number">3.11.1.</span> <span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Range-%E5%92%8C-Repeat"><span class="nav-number">3.12.</span> <span class="nav-text">Range 和 Repeat</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-12"><span class="nav-number">3.12.1.</span> <span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Any-%E5%92%8C-All"><span class="nav-number">3.13.</span> <span class="nav-text">Any 和 All</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-13"><span class="nav-number">3.13.1.</span> <span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Concat-%E5%92%8C-Union"><span class="nav-number">3.14.</span> <span class="nav-text">Concat 和 Union</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-14"><span class="nav-number">3.14.1.</span> <span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GroupBy-%E5%88%86%E7%BB%84"><span class="nav-number">3.15.</span> <span class="nav-text">GroupBy 分组</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-15"><span class="nav-number">3.15.1.</span> <span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DefaultIfEmpty-%E7%A9%BA%E6%9B%BF%E6%8D%A2"><span class="nav-number">3.16.</span> <span class="nav-text">DefaultIfEmpty 空替换</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-16"><span class="nav-number">3.16.1.</span> <span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SequenceEqual-%E9%9B%86%E5%90%88%E7%9B%B8%E7%AD%89"><span class="nav-number">3.17.</span> <span class="nav-text">SequenceEqual 集合相等</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B6%E5%AE%83%E5%B8%B8%E7%94%A8%E6%96%B9%E6%B3%95"><span class="nav-number">3.18.</span> <span class="nav-text">其它常用方法</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="反骨仔"
+      src="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+  <p class="site-author-name" itemprop="name">反骨仔</p>
+  <div class="site-description" itemprop="description">一个业余的 .NET Core 攻城狮</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/liqingwen2015" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;liqingwen2015" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://gitee.com/liqingwen" title="Gitee → https:&#x2F;&#x2F;gitee.com&#x2F;liqingwen" rel="noopener" target="_blank"><i class="fab fa-instagram fa-fw"></i>Gitee</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:liqingwen2013@outlook.com" title="E-Mail → mailto:liqingwen2013@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://669.icu/" title="http:&#x2F;&#x2F;669.icu" rel="noopener" target="_blank">技术总舵</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://toolbox.669.icu/" title="http:&#x2F;&#x2F;toolbox.669.icu" rel="noopener" target="_blank">Toolbox</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备20021676号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">反骨仔</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1279567760&web_id=1279567760"></script>
+  </div>
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="100" alpha="0.5" zIndex="-1" src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-ribbon@1/canvas-ribbon.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three-waves.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/canvas_lines.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/docker-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/docker-16x16.png">
+  <link rel="mask-icon" href="/images/docker.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.669.icu","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":true,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true},"motion":{"enable":true,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本章通过“查询天气接口”的例子，来讲述 JMeter 中参数化、断言、关联、正则表达式的用法 。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="19 JMeter 天气接口自动化测试">
+<meta property="og:url" content="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/19%20JMeter%20%E5%A4%A9%E6%B0%94%E6%8E%A5%E5%8F%A3%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95/index.html">
+<meta property="og:site_name" content="反骨仔">
+<meta property="og:description" content="本章通过“查询天气接口”的例子，来讲述 JMeter 中参数化、断言、关联、正则表达式的用法 。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111003646994.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004139998.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004203257.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004232183.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004336147.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004626057.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004652397.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004947109.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111011128382.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111011152330.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111011247190.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111011402224.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111011556119.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111011607192.png">
+<meta property="article:published_time" content="2020-01-08T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-17T04:18:27.003Z">
+<meta property="article:author" content="反骨仔">
+<meta property="article:tag" content="http">
+<meta property="article:tag" content="抓包">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111003646994.png">
+
+<link rel="canonical" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/19%20JMeter%20%E5%A4%A9%E6%B0%94%E6%8E%A5%E5%8F%A3%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>19 JMeter 天气接口自动化测试 | 反骨仔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="反骨仔" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">反骨仔</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">一个业余的 .NET Core 攻城狮</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/liqingwen2015" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/19%20JMeter%20%E5%A4%A9%E6%B0%94%E6%8E%A5%E5%8F%A3%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+      <meta itemprop="name" content="反骨仔">
+      <meta itemprop="description" content="一个业余的 .NET Core 攻城狮">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="反骨仔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          19 JMeter 天气接口自动化测试
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-09 00:00:00" itemprop="dateCreated datePublished" datetime="2020-01-09T00:00:00+08:00">2020-01-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-01-17 12:18:27" itemprop="dateModified" datetime="2021-01-17T12:18:27+08:00">2021-01-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8AHTTP-%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98%E3%80%8B/" itemprop="url" rel="index"><span itemprop="name">《HTTP 抓包实战》</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本章通过“查询天气接口”的例子，来讲述 JMeter 中参数化、断言、关联、正则表达式的用法 。</p>
+<a id="more"></a>
+<h1>19.1 天气查询的例子</h1>
+<p>手动查询天气 的步骤：</p>
+<ol>
+<li>打开浏览器，打开 <a target="_blank" rel="noopener" href="http://www.weather.com.cn/">http://www.weather.com.cn/</a></li>
+<li>在“城市名称”中输入“上海”，单击查询，就能查询到上海的天气 。接下来我们把这个天气查询的例子做成自动化。</li>
+</ol>
+<h1>19.2 天气查询网站抓包</h1>
+<p>启动 Fiddler，单击菜单栏中 Rules -&gt; Hide Image Requests 。 抓包的时候，如果抓了 太多不相干的包，干扰会很大，所以我把图片的包都隐藏了。</p>
+<p>打开浏览器，打开 <a target="_blank" rel="noopener" href="http://www.weather.com.cn/%EF%BC%8C%E5%9C%A8%E2%80%9C%E5%9F%8E%E5%B8%82%E5%90%8D%E7%A7%B0%E2%80%9D%E4%B8%AD%E8%BE%93%E5%85%A5%E2%80%9C%E4%B8%8A%E6%B5%B7%E2%80%9C%EF%BC%8C%E5%8D%95%E5%87%BB%E6%9F%A5%E8%AF%A2%E6%8C%89%E9%92%AE%E3%80%82">http://www.weather.com.cn/，在“城市名称”中输入“上海“，单击查询按钮。</a></p>
+<p>通过 Fiddler 抓包，会抓到几十个包。</p>
+<h1>19.3 抓包分析</h1>
+<p>通过上面的抓包，我们经过分析可以知道实际上是做了 2 步。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111003646994.png" alt="image-20210111003646994"></p>
+<ol>
+<li>
+<p>第一步 ：获取城市代码</p>
+<p>发送一个 GET 请求到 <a target="_blank" rel="noopener" href="http://toyl.weather.com.cn/search?cityname=%E4%B8%8A%E6%B5%B7%EF%BC%88%E6%B3%A8%E6%84%8F">http://toyl.weather.com.cn/search?cityname=上海（注意</a> ， “上海”被 URLEncode 后变成了“ %E4%B8%8A%E6%B5%B7“）。</p>
+<p>从这个响应中可以得到上海的地区代码，比如上海的地区代码是 101020100 。</p>
+<p>【注意 】这个请求必须带上一个 叫“ Referer ”的 Header，Referer 的作用 就是用来追踪来源的。</p>
+</li>
+<li>
+<p>第二步：获取城市的天气数据。</p>
+<p>发送一个 GET 请求到 <a target="_blank" rel="noopener" href="http://www.weather.eom.cn/weatherld/101020100.shtml%EF%BC%8C%E5%8F%AF%E4%BB%A5%E5%BE%97%E5%88%B0%E8%AF%A5%E5%9F%8E%E5%B8%82">http://www.weather.eom.cn/weatherld/101020100.shtml，可以得到该城市</a> 的天气数据 。</p>
+<p>另外，我们还需要做把城市参数化，这样就可以查询任何一个城市的天气 。 第一个请求查询到的数据要传给第二个请求使用，我们称之为关联。</p>
+</li>
+</ol>
+<h1>19.4 获取城市地区代码</h1>
+<p>现在我们用 JMeter 来发包，实现整个过程，具体的操作步骤如下。</p>
+<ol>
+<li>启动 JMeter，新建一个线程组（ Thread Group ）</li>
+<li>在线程组下面新建一个 HTTP 请求，将其命名为 GetCityCode。发送一个 Get 方法的 HTTP 请求到 <a target="_blank" rel="noopener" href="http://toyl.weather.com.cn/search?cityname=%E4%B8%8A%E6%B5%B7">http://toyl.weather.com.cn/search?cityname=上海</a></li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004139998.png" alt="image-20210111004139998"></p>
+<p>添加一个 HTTP 信息头管理器，添加一个 Referer。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004203257.png" alt="image-20210111004203257"></p>
+<p>再添加一个察看结果树，就可以运行查看结果了，如图 19-4 所示 。 注意这里的汉字变成乱码了 。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004232183.png" alt="image-20210111004232183"></p>
+<h1>19.5 处理 JMeter 中 HTTP 响应乱码</h1>
+<p>为什么中文会显示为乱码呢？</p>
+<p>当响应数据或响应页面没有设置编码时，JMeter 会按照 jmeter .properties 文件中的 sampleresult.default.encoding 设置的格式解析 。 默认是 IS0-8859-1，所以解析中文时肯定会出错 。jmeter.properties 文件在 \apache-jmeter-3.2\bin 下面，内容如下：</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004336147.png" alt="image-20210111004336147"></p>
+<p>重新启动 JMeter，打开脚本，重新运行。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004626057.png" alt="image-20210111004626057"></p>
+<h1>19.6 添加验证点</h1>
+<p>选择 GetCityCode 这个 HTTP 请求，用鼠标右键选择添加－＞断言－＞响应断言。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004652397.png" alt="image-20210111004652397"></p>
+<p>选择线程组，用鼠标右键选择添加，＞监听器”＞断言结果 。</p>
+<p>运行后，如果 HTTP 响应中没有包含期待的宇符串，那么断言就会失败。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111004947109.png" alt="image-20210111004947109"></p>
+<h1>19.7 使用用户自定义变量</h1>
+<p>我们还可以在几1eter 中定义变量。 比如我们定义一个变量叫 city，调用这个变量的时候用 ${city｝。<br>
+选择线程组，用鼠标右键选择添加 -＞配置元件·＞用户定义的变量。</p>
+<p>我们添加一个变量 city ，其值设为“上海”。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111011128382.png" alt="image-20210111011128382"></p>
+<p>然后在 GetCityCode 中使用这个变量。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111011152330.png" alt="image-20210111011152330"></p>
+<p>这样我们就实现了参数化，以后修改城市的时候，只要修改用户自定义变量就可以了 。</p>
+<h1>19.8 正则表达式提取城市地区代码</h1>
+<p>如果你不熟悉正则表达式，请去百度搜索“正则表达式 30 分钟入门教程”。 正则表达式的教程和工具可以到 <a target="_blank" rel="noopener" href="https://deerchao.ne/torials/regex/regex-1.htm">https://deerchao.ne/torials/regex/regex-1.htm</a> 下载 。</p>
+<p>推荐先使用 一个正则表达式测试器测试一下你的正则表达式字符串是否正确。方法是把 GetCityCode 的 HTTP 响应复制到正则表达式工具中，测试一下正则表达式字符串是否正确 。</p>
+<p>例如，我们的正则表达式字符串是(\d{9}?～.*～上海</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111011247190.png" alt="image-20210111011247190"></p>
+<p>选择 GetCityCode 这个 HTTP 请求，用鼠标右键选择添加 –&gt; 后置处理器”＞正则表达式提取器</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111011402224.png" alt="image-20210111011402224"></p>
+<p>所谓关联 ， 就是一个 HTTP 请求使用了另一个 HTTP 请求中的数据，两个请求之间发生了关联。</p>
+<p>通过正则表达式提取器，我们把城市代码提取出来，并且存到变量 citycode ，然后把这个变量提供给第二个 HTTP 请求使用。</p>
+<h1>19.9 获取天气</h1>
+<p>现在新建第二个 HTTP 请求，命名为 GetWeather。发送一个 GET 请求到 <a target="_blank" rel="noopener" href="http://www.weather.com.en/weather1d/$%7Bcitycode%7D">http://www.weather.com.en/weather1d/${citycode}</a> .shtml 。</p>
+<p>${citycode} 中的数据是从正则表达式中提取来的。</p>
+<p>现在 ，脚本全部写好了。运行后，在“察看结果树”中查看结果。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111011556119.png" alt="image-20210111011556119"></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111011607192.png" alt="image-20210111011607192"></p>
+<h1>参考</h1>
+<p>《HTTP 抓包实战》</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/http/" rel="tag"># http</a>
+              <a href="/tags/%E6%8A%93%E5%8C%85/" rel="tag"># 抓包</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/17%20%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E5%92%8C%E6%8E%A5%E5%8F%A3%E6%B5%8B%E8%AF%95/" rel="prev" title="17 自动化测试和接口测试">
+      <i class="fa fa-chevron-left"></i> 17 自动化测试和接口测试
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/16%20Fiddler%20%E5%AE%9E%E7%8E%B0%E5%BC%B1%E7%BD%91%E6%B5%8B%E8%AF%95/" rel="next" title="16 Fiddler 实现弱网测试">
+      16 Fiddler 实现弱网测试 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">19.1 天气查询的例子</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">19.2 天气查询网站抓包</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">19.3 抓包分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">19.4 获取城市地区代码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">5.</span> <span class="nav-text">19.5 处理 JMeter 中 HTTP 响应乱码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">6.</span> <span class="nav-text">19.6 添加验证点</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">7.</span> <span class="nav-text">19.7 使用用户自定义变量</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">8.</span> <span class="nav-text">19.8 正则表达式提取城市地区代码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">9.</span> <span class="nav-text">19.9 获取天气</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">10.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="反骨仔"
+      src="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+  <p class="site-author-name" itemprop="name">反骨仔</p>
+  <div class="site-description" itemprop="description">一个业余的 .NET Core 攻城狮</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/liqingwen2015" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;liqingwen2015" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://gitee.com/liqingwen" title="Gitee → https:&#x2F;&#x2F;gitee.com&#x2F;liqingwen" rel="noopener" target="_blank"><i class="fab fa-instagram fa-fw"></i>Gitee</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:liqingwen2013@outlook.com" title="E-Mail → mailto:liqingwen2013@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://669.icu/" title="http:&#x2F;&#x2F;669.icu" rel="noopener" target="_blank">技术总舵</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://toolbox.669.icu/" title="http:&#x2F;&#x2F;toolbox.669.icu" rel="noopener" target="_blank">Toolbox</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备20021676号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">反骨仔</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1279567760&web_id=1279567760"></script>
+  </div>
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="100" alpha="0.5" zIndex="-1" src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-ribbon@1/canvas-ribbon.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three-waves.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/canvas_lines.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

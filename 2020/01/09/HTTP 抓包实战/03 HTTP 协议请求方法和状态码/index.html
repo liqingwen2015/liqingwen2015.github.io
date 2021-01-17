@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/docker-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/docker-16x16.png">
+  <link rel="mask-icon" href="/images/docker.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.669.icu","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":true,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true},"motion":{"enable":true,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="HTTP 请求方法、状态码和首部(Header）是互相配合、一起工作的。浏览器客户端通过 HTTP 方法告诉服务器要执行什么动作，服务器通过状态码来告诉浏览器客户端动作是否执行成功。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="03 HTTP 协议请求方法和状态码">
+<meta property="og:url" content="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/03%20HTTP%20%E5%8D%8F%E8%AE%AE%E8%AF%B7%E6%B1%82%E6%96%B9%E6%B3%95%E5%92%8C%E7%8A%B6%E6%80%81%E7%A0%81/index.html">
+<meta property="og:site_name" content="反骨仔">
+<meta property="og:description" content="HTTP 请求方法、状态码和首部(Header）是互相配合、一起工作的。浏览器客户端通过 HTTP 方法告诉服务器要执行什么动作，服务器通过状态码来告诉浏览器客户端动作是否执行成功。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102180234441.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210116150942966.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210116150020346.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102180949261.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102181018330.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102181056888.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102181628213.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102181705286.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102181808010.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102182526077.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102182714532.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102183723426.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102185851371.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102190301505.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102190550135.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102190704480.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102190914993.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102191123002.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102191227974.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102191330535.png">
+<meta property="article:published_time" content="2020-01-08T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-16T07:15:24.766Z">
+<meta property="article:author" content="反骨仔">
+<meta property="article:tag" content="http">
+<meta property="article:tag" content="抓包">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102180234441.png">
+
+<link rel="canonical" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/03%20HTTP%20%E5%8D%8F%E8%AE%AE%E8%AF%B7%E6%B1%82%E6%96%B9%E6%B3%95%E5%92%8C%E7%8A%B6%E6%80%81%E7%A0%81/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>03 HTTP 协议请求方法和状态码 | 反骨仔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="反骨仔" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">反骨仔</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">一个业余的 .NET Core 攻城狮</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/liqingwen2015" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/03%20HTTP%20%E5%8D%8F%E8%AE%AE%E8%AF%B7%E6%B1%82%E6%96%B9%E6%B3%95%E5%92%8C%E7%8A%B6%E6%80%81%E7%A0%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+      <meta itemprop="name" content="反骨仔">
+      <meta itemprop="description" content="一个业余的 .NET Core 攻城狮">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="反骨仔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          03 HTTP 协议请求方法和状态码
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-09 00:00:00" itemprop="dateCreated datePublished" datetime="2020-01-09T00:00:00+08:00">2020-01-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-01-16 15:15:24" itemprop="dateModified" datetime="2021-01-16T15:15:24+08:00">2021-01-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8AHTTP-%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98%E3%80%8B/" itemprop="url" rel="index"><span itemprop="name">《HTTP 抓包实战》</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>HTTP 请求方法、状态码和首部(Header）是互相配合、一起工作的。浏览器客户端通过 HTTP 方法告诉服务器要执行什么动作，服务器通过状态码来告诉浏览器客户端动作是否执行成功。</p>
+<a id="more"></a>
+<h1>3.1 URL 详解</h1>
+<p>URL 的全称是 Uniform Resource Locator，中 文译名为“统一资源定位符”，用于完整地描述 Internet 上某一处资源的地址。</p>
+<p>Internet 上的每个网页都有一个标识，一般称之为 URL 地址，或者 Web 地址，俗称“网址”。URL 地址可以是本地磁盘，也可以是局域网上的某一台计算机，更多的是 Internet 上的站点 。</p>
+<p>URI 的全称是 Uniform Resource Identifier，中文译名为“统一资源标识符“用来唯一地标识一个资源。而 URL 是一种具体的 URI 。</p>
+<p>我们可以简单地把 URI 和 URL 看作同一个东西 。</p>
+<h2 id="3-1-1-URL-格式">3.1.1 URL 格式</h2>
+<p>URL 的基本格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">schema:&#x2F;&#x2F;host[:port#]&#x2F;path&#x2F;...&#x2F;[?query-string][#anchor]</span><br></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>schema</td>
+<td>指定低层使用的协议（例如 ：http, https, ftp)</td>
+</tr>
+<tr>
+<td>host</td>
+<td>HTTP 服务器的 IP 地址或者域名</td>
+</tr>
+<tr>
+<td>port#</td>
+<td>HTTP 服务器的默认端口是 80，这种情况下端口号可以省略。如果使用了别的端口，则必须指明，例如  <a target="_blank" rel="noopener" href="http://www.cnblogs.com:8080/">http://www.cnblogs.com:8080/</a></td>
+</tr>
+<tr>
+<td>path</td>
+<td>访问资源的路径</td>
+</tr>
+<tr>
+<td>query-string</td>
+<td>发送给 http 服务器的数据</td>
+</tr>
+<tr>
+<td>anchor</td>
+<td>锚</td>
+</tr>
+</tbody>
+</table>
+<p>URL 的一个例子如下 ：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http:&#x2F;&#x2F;www.mywebsite.com&#x2F;liqingwen&#x2F;test&#x2F;test.aspx?narne&#x3D;sviergn&amp;x&#x3D;true#stuff</span><br></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Schema（协议）</td>
+<td>http</td>
+</tr>
+<tr>
+<td>host （域名）</td>
+<td><a target="_blank" rel="noopener" href="http://www.mywebsite.com">www.mywebsite.com</a></td>
+</tr>
+<tr>
+<td>path（资源的路径）</td>
+<td>/liqingwen/test/test.aspx</td>
+</tr>
+<tr>
+<td>Query String（参数）</td>
+<td>name=sviergn&amp;x=true</td>
+</tr>
+<tr>
+<td>Anchor（锚）</td>
+<td>stuff</td>
+</tr>
+</tbody>
+</table>
+<h1>3.1.2 URL 中的锚点</h1>
+<p>锚点（Anchor）是一种超链接，只是它是页面内部的超链接。</p>
+<p>假如有一个网页很长，而且里面的内容可以分为 N 个部分。这样的话，我们就可以在网页的顶部设置一些锚点，以便浏览者单击相应的锚点，快速到达本页内相应的位置，而不必在一个很长的网页里自行寻找。</p>
+<p>锚点在 URL 的最右边，前面有一个字符“#”。</p>
+<p>比如下面的 #source：<a target="_blank" rel="noopener" href="http://www.cnblogs.com/liqingwen/p/7087990.html#source">http://www.cnblogs.com/liqingwen/p/7087990.html#source</a></p>
+<h1>3.2 HTTP 请求方法</h1>
+<p>HTTP 协议中定义了几种不同的请求命令，这些命令叫作 HTTP 方法 CHTTP Method）。每个 HTTP 请求报文中都包含一个方法，这个方法会告诉服务器要执行什么动作，如是要获取一个 Web 页面还是要删除一个文件。</p>
+<p>HTTP 协议定义了很多与服务器交互的方法，最基本的有 5 种， 分别是 GET 、 HEAD 、POST 、PUT 、DELETE 。一个 URL 地址用于描述一个网络上的资源，而 HTTP 中的 GET、POST、PUT、DELETE 就对应着对这个资源的查、改、增、删 4 个操作。最常见的是 GET 和 POST 。GET 一般用于获取／查询资源信息，而 POST 一般用于更新资源信息。</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td>请求指定的页面信息并返回实体主体</td>
+</tr>
+<tr>
+<td>HEAD</td>
+<td>类似于GET请求,只不过返回的响应中没有具体的内容,用于获取报头</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>向指定资源提交数椐进行处理请求(例如提交表单或者上传文件),数据被包 含在请求体中。POST请求可能会导致新的资源的建立和/或对已有资源的修改</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>从客户端向服务器传送的数据取代指定文档的内容</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>请求服务器除指定的页面</td>
+</tr>
+</tbody>
+</table>
+<h1>3.2.1 GET 方法</h1>
+<p>GET 是最常见的方法，用于获取资源，常用于向服务器查询某些信息。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102180234441.png" alt="image-20210102180234441"></p>
+<p>启动 Fiddler，打开浏览器，输入 <a target="_blank" rel="noopener" href="http://www.669.icu">http://www.669.icu</a>。从 Fiddler 中可以看到浏览器发出的是 GET 方法。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210116150942966.png" alt="image-20210116150942966"></p>
+<p>打开网页一般都是用 GET 方法，因为要从 Web 服务器获取信息。</p>
+<h2 id="3-2-2-带参数的-GET-方法">3.2.2 带参数的 GET 方法</h2>
+<p>浏览器也可以在 GET 方法中把数据传给服务器，数据放在 URL 的问号（？）后面 。</p>
+<p>将查询字符串参数追加到 URL 末尾，以便将信息发送给服务器。这种方式叫查询字符串，或者叫 Query String。</p>
+<p>百度中某搜索 URL 如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https:&#x2F;&#x2F;www.baidu.com&#x2F;s?ie&#x3D;utf-8&amp;f&#x3D;3&amp;rsv_bp&#x3D;1&amp;rsv_idx&#x3D;1&amp;tn&#x3D;baidu&amp;wd&#x3D;%E4%BD%A0%E5%A5%BD&amp;fenlei&#x3D;256&amp;rsv_pq&#x3D;8187eb1f001397cd&amp;rsv_t&#x3D;3f8e8T5zasKgSnEB9un5%2FDUp%2F1Z5B9z%2BvLILeBJCEeAJv5l%2FMUpFF%2B5AIT4&amp;rqlang&#x3D;cn&amp;rsv_enter&#x3D;1&amp;rsv_dl&#x3D;ts_0&amp;rsv_sug3&#x3D;6&amp;rsv_sug1&#x3D;4&amp;rsv_sug7&#x3D;100&amp;rsv_sug2&#x3D;0&amp;rsv_btype&#x3D;i&amp;prefixsug&#x3D;nih&amp;rsp&#x3D;0&amp;inputT&#x3D;5314&amp;rsv_sug4&#x3D;5315</span><br></pre></td></tr></table></figure>
+<p>查询字符串以“名=值”这样的形式出现，多个名值之间用字符“＆＂隔开。</p>
+<p>在 Fiddler 中，使用 WebForms 选项卡可以更清楚地看到 GET 方法中的查询字符串参数。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210116150020346.png" alt="image-20210116150020346"></p>
+<h2 id="3-2-3-POST-方法">3.2.3 POST 方法</h2>
+<p>POST 方法通常用来把表单中填好的数据发送给服务器 。</p>
+<p>启动 Fiddler，打开浏览器，输入 <a target="_blank" rel="noopener" href="http://www.669.icu/posttest%EF%BC%8C%E8%BE%93%E5%85%A5%E7%94%A8%E6%88%B7%E5%90%8D%E5%92%8C%E5%AF%86%E7%A0%81">http://www.669.icu/posttest，输入用户名和密码</a> ， 然后单击登录。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102180949261.png" alt="image-20210102180949261"></p>
+<p>我们可以清晰地看到浏览器发出的是 POST 方法，该方法把用户名和密码的信息发送给了服务器。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102181018330.png" alt="image-20210102181018330"></p>
+<p>使用 WebForms Tab 可以更清楚地看到 Body 主体里面的内容。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102181056888.png" alt="image-20210102181056888"></p>
+<h2 id="3-2-4-GET-和-POST-方法的区别">3.2.4 GET 和 POST 方法的区别</h2>
+<p>GET 和 POST 的区别主要表现在如下方面：</p>
+<ul>
+<li>GET 提交的数据会放在 URL 之后，以问号（？）分割 URL 和传输数据 ，参数之间以＆相 连 ，如 EditPosts.aspx?name=testl&amp;id=123456。POST 方法是把提交的数据放在 HTTP 包的 Body 中</li>
+<li>GET 提交 的数据大小有限制（因为浏览器对 URL 的长度有限制），而 POST 方法提交的数据大小没有限制</li>
+<li>GET 方式需要使用 <code>Request.QueryString</code> 来取得变量的值 ，而 POST 方法通过 <code>Request.Form</code> 来获取变量的值</li>
+<li>GET 方式提交数据会带来安全问题，比如一个登录页面通过 GET 方式提交数据时，用户名和密码将出现在 URL 上 ，如果页面可以被缓存或者其他人可以访问这台机器，就可以从历史记录获得该用户的账号和密码。</li>
+</ul>
+<h1>3.3 HTTP 状态码</h1>
+<h2 id="3-3-1-什么是-HTTP-状态码">3.3.1 什么是 HTTP 状态码</h2>
+<p>每个 HTTP 响应报文都会携带一个状态码，用于告诉客户端请求是否成功。状态码是一个 3 位数字的代码。</p>
+<p>HTTP 状态码存在于 HTTP 的响应报文中， 其作用 是 Web 服务器用来告诉客户端发生了什么事。</p>
+<p>HTTP 响应报文中的第一行，由 HTTP 协议版本号、状态码 、状态消息 3 部分组成。状态码用来告诉 HTTP 客户端 Web 服务器是否产生了预期的 HTTP 响应。</p>
+<h1>3.3.2 状态码分类</h1>
+<p>HTTP/1.1 中定义了 5 类状态码，状态码由 3 位数字组成 ，第一个数字定义了响应的类别。</p>
+<p>HTTP 状态码被分为 5 大类 ， 支持如表 3-2 所示的状态码。随着协议的发展 ，HTTP 规范 中会定义更多的状态码 。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102181628213.png" alt="image-20210102181628213"></p>
+<h2 id="3-3-3-常见的状态码">3.3.3 常见的状态码</h2>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102181705286.png" alt="image-20210102181705286"></p>
+<h2 id="3-3-4-200-OK">3.3.4 200 (OK)</h2>
+<p>最常见的状态码就是成功响应状态码 200 了 ，它表明该请求被成功地完成 ，所请求的资源成功地发送回客户端 。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102181808010.png" alt="image-20210102181808010"></p>
+<h2 id="3-3-5-204（No-Content，没有内容）">3.3.5 204（No Content，没有内容）</h2>
+<p>返回的 HTTP 响应中只有一些 Header 和一个状态行，美有实体的主题内容（没有响应 Body）。</p>
+<p>204 状态码的作用如下：</p>
+<ol>
+<li>在不获取资源的情况下了解资源的情况（比如判断其类型）</li>
+<li>通过查看 HTTP 响应中的状态码看某个对象是否存在</li>
+<li>通过查看 Header 测试资源是否被修改</li>
+</ol>
+<p>【实例】启动 Fiddler，启动浏览器访问 <a target="_blank" rel="noopener" href="http://www.google.cn">http://www.google.cn</a>，会捕获到很多 204。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102182526077.png" alt="image-20210102182526077"></p>
+<h2 id="3-3-6-206-Partial-Content，部分内容）">3.3.6 206 ( Partial Content，部分内容）</h2>
+<p>206 状态码代表服务器已经成功处理了部分 GET 请求（只有发送 GET 方法的 HTTP请求 ，Web 服务器才可能返回 206 ） 。</p>
+<p>206 的应用场景如下：</p>
+<ol>
+<li>
+<p>FlashGet、迅雷或者 HTTP 下载工具都是使用 206 状态码来实现断点续传的</p>
+</li>
+<li>
+<p>将一个大文档分解为多个下载段同 时下载，比如在线看视频。</p>
+</li>
+</ol>
+<p>实例 ：如图 3-9 所示，一些流媒体技术， 比如在线视频可以边看边下载，就是使用 206 状态码来实现的。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102182714532.png" alt="image-20210102182714532"></p>
+<p>启动 Fiddler，然后用浏览器打开“搜狐视频中的绿箭侠” <a target="_blank" rel="noopener" href="http://tv.sohu.com/20121011/n354681393.shtml%EF%BC%8C%E4%BC%9A%E5%8F%91%E7%8E%B0">http://tv.sohu.com/20121011/n354681393.shtml，会发现</a> Fiddler 中就能看到一堆的 206。</p>
+<ol>
+<li>浏览器发送一个 GET 方法的 HTTP 请求，Header 中包含 Range: bytes=5303296-5336063 （意思就是请求得到 5303296～ 5336063 之间的数据〉</li>
+<li>Web 服务器返回一个 206 的 HTTP 响应。Header 中包含 Content-Range: bytes 5303296-5336063/12129376 （表明这次返回的内容范围）</li>
+</ol>
+<h2 id="3-3-7-301-Moved-Permanently">3.3.7 301 (Moved Permanently)</h2>
+<p>服务器返回 301 的时候，表示请求的网页己经永久性地转移到另一个地址。</p>
+<p>在如下情况下需要用到 301。</p>
+<ol>
+<li>防止用户输错域名。比如 Google 担心用户输错域名 ，就把其他类似的域名买下来，比如 <a target="_blank" rel="noopener" href="http://www.goOgle.com">www.goOgle.com</a> ，然后重定向到 <a target="_blank" rel="noopener" href="http://www.google.com">www.google.com</a></li>
+<li>网站更换域名 。一些网站壮大后 ，会换个更好的域名。比如京东以前的域名是 <a target="_blank" rel="noopener" href="http://www.360buy.com">www.360buy.com</a>，现在的域名是 <a target="_blank" rel="noopener" href="http://www.jd.com">www.jd.com</a></li>
+<li>有多个权重不错的域名，需要把所有的权重都传递到新域名上，这就需要 301 重定向了。如果不设置 301，多个域名绑定在一个主机头上，会被搜索引擎认为是两个相同的站点，不利于网站的排名 。 绑定的域名越多，内 容重复度也就越高，排名越低 。</li>
+</ol>
+<p>【实例】查看京东的老域名跳转到新域名：</p>
+<p>启动 Fiddler ，在浏览器中输入 <a target="_blank" rel="noopener" href="http://www.360buy.com">http://www.360buy.com</a>。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102183723426.png" alt="image-20210102183723426"></p>
+<ol>
+<li>浏览器发送请求访问 <a target="_blank" rel="noopener" href="http://www.360buy.com">www.360buy.com</a>，服务器返回 301 ，并且 Location 是 <a target="_blank" rel="noopener" href="http://www.jd.com">www.jd.com</a></li>
+<li>浏览器会读取 Location 中的 URL，自动发送一个新的 HTTP？请求去访问 <a target="_blank" rel="noopener" href="http://www.jd.com">www.jd.com</a></li>
+</ol>
+<h2 id="3-3-8-302-Found">3.3.8 302 ( Found )</h2>
+<p>当我们访问 一个 URL 的时候，服务器要我们访问另 一个资源 ，这时候浏览器会继续发一个 HTTP ，请求访 问 新的资源 。</p>
+<p>【实例】在未登录状态下，直接访问需要登录才能访问的页面，会被服务器返回 302 ，跳转到登录页面 。 具体操作步骤如下。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102185851371.png" alt="image-20210102185851371"></p>
+<ol>
+<li>
+<p>启动 Fiddler，打开浏览器，直接在地址栏中输入 <a target="_blank" rel="noopener" href="https://i.cnblogs.com/">https://i.cnblogs.com/</a></p>
+</li>
+<li>
+<p>在 Fiddler 中可以看到服务器返 回 302 ，井且 Location=/user/signin?ReturnUrl=%2f（告诉客户端，新的资源在这里）</p>
+</li>
+<li>
+<p>浏览器会自动再发送一个新的 HTTP 请求一一去访问 <a target="_blank" rel="noopener" href="https://i.cnblogs.com/user/signin?ReturnUrl=%2f">https://i.cnblogs.com/user/signin?ReturnUrl=%2F</a></p>
+</li>
+</ol>
+<h2 id="3-3-9-301-和-302-的区别">3.3.9 301 和 302 的区别</h2>
+<p>状态码 301 和 302 在语法上是一模一样的，都是在 Location 中返回新的 URL 。</p>
+<p>区别在于：</p>
+<ul>
+<li>301 表示旧地址的资源己经被永久地移除了（这个资源不可访问了），搜索引擎会把权重算到新地址；</li>
+<li>302 表示 旧地址的资源还在（仍然可以访问），这个重定向只是临时地从旧地址跳转到新地址，搜索引擎会把权重算到旧地址。</li>
+</ul>
+<h2 id="3-3-10-304-Not-Modified">3.3.10 304 (Not Modified)</h2>
+<p>304 状态码代表上次的文档己经被缓存了，还可以继续使用。</p>
+<p>例如打开博客园首页，会发现很多 HTTP 响应的状态码都是 304 ，如图所示 。304 的响应是没有 Body 的 。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102190301505.png" alt="image-20210102190301505"></p>
+<p>如果你不想使用本地缓存，可以用【Ctrl+F5】组合键强制刷新页面。</p>
+<h2 id="3-3-11-400-Bad-Request">3.3.11 400 (Bad Request)</h2>
+<p>状态码 400 表示客户端请求有语法错误，发送的 HTTP 请求中的数据有错误（如表单有错误、Cookie 有错误）。不能被服务器所理解。</p>
+<p>【实例】快递查询接口，如果参数不对 ，服务器会返回 400 状态码 。</p>
+<p>打开 Fiddler ，在浏览器中输入 <a target="_blank" rel="noopener" href="http://www.kuaidi100.com/query?type=xxx%E3%80%82">http://www.kuaidi100.com/query?type=xxx。</a></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102190550135.png" alt="image-20210102190550135"></p>
+<h2 id="3-3-12-401（Unauthorized">3.3.12 401（Unauthorized)</h2>
+<p>状态码 401 是指未授权错误。有些网页采用的是 HTTP 基本认证（Basic Authentication），需要在 HTTP 请求中带上 Authorization Header，否则服务器会返回状态码 401。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102190704480.png" alt="image-20210102190704480"></p>
+<h2 id="3-3-13-403-Forbidden">3.3.13 403 (Forbidden)</h2>
+<p>403 状态码表示 Web 客户端发送的请求被 Web 服务器拒绝了。如果服务器想说明为什么拒绝请求，可以在 Bo dy 中描述原因。但这个状态码通常表示服务器不想说明拒绝原因。</p>
+<p>访问 URL:<a target="_blank" rel="noopener" href="http://t2.baidu.com/it/u=1791561788,200960144&amp;fm=0&amp;gp=0.jpg%EF%BC%8C%E4%BC%9A%E8%A2%AB%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%8B%92%E7%BB%9D%EF%BC%8C%E5%B9%B6%E4%B8%94%E8%BF%94%E5%9B%9E">http://t2.baidu.com/it/u=1791561788,200960144&amp;fm=0&amp;gp=0.jpg，会被服务器拒绝，并且返回</a> 403 状态码。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102190914993.png" alt="image-20210102190914993"></p>
+<h2 id="3-3-14-404-Not-Found">3.3.14 404 ( Not Found )</h2>
+<p>当你访问一个 URL ，这个 URL 的域名是正确的，但是资源不存在，服务器就会返回 404 状态码，告诉浏览器资源不存在（意味着输错了 URL）。</p>
+<p>启动 F iddler，输入 <a target="_blank" rel="noopener" href="http://www.cnblogs/tankxiao/p/888.html%EF%BC%88888.htrnl">http://www.cnblogs/tankxiao/p/888.html（888.htrnl</a> 这个文件在服务器上不存在〉。</p>
+<p>如图所示，我们可以看到 Web 服务器会返回 404 状态码，这个 404 页面是可以自定义的。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102191123002.png" alt="image-20210102191123002"></p>
+<h2 id="3-3-15-500-Internal-Server-Error">3.3.15 500 (Internal Server Error)</h2>
+<p>状态码 500 代表服务器内部错误。出现错误的原因有很多，比如代码的错误、数据库连接语句出错、程序内部抛出异常、空指针错误等 。</p>
+<p>当数据库连接不成功的时候，服务器返回 500 状态码 。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102191227974.png" alt="image-20210102191227974"></p>
+<h2 id="3-3-16-503（Server-Unavailable）">3.3.16 503（Server Unavailable）</h2>
+<p>状态码 503 表示服务器暂时不可用 。由于服务器维护或者过载，服务器当前无法处理请求 ；这个状况是临时的，并且将在一段时间以后恢复。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210102191330535.png" alt="image-20210102191330535"></p>
+<h1>参考</h1>
+<ul>
+<li>《HTTP 抓包实战》</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/http/" rel="tag"># http</a>
+              <a href="/tags/%E6%8A%93%E5%8C%85/" rel="tag"># 抓包</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/21%20%E8%87%AA%E5%8A%A8%E7%99%BB%E5%BD%95%E7%A6%85%E9%81%93%E5%92%8C%E8%87%AA%E5%8A%A8%E5%BC%80%20Bug/" rel="next" title="21 自动登录禅道和自动开 Bug">
+      21 自动登录禅道和自动开 Bug <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">3.1 URL 详解</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#3-1-1-URL-%E6%A0%BC%E5%BC%8F"><span class="nav-number">1.1.</span> <span class="nav-text">3.1.1 URL 格式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">3.1.2 URL 中的锚点</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">3.2 HTTP 请求方法</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">3.2.1 GET 方法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#3-2-2-%E5%B8%A6%E5%8F%82%E6%95%B0%E7%9A%84-GET-%E6%96%B9%E6%B3%95"><span class="nav-number">4.1.</span> <span class="nav-text">3.2.2 带参数的 GET 方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-2-3-POST-%E6%96%B9%E6%B3%95"><span class="nav-number">4.2.</span> <span class="nav-text">3.2.3 POST 方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-2-4-GET-%E5%92%8C-POST-%E6%96%B9%E6%B3%95%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">4.3.</span> <span class="nav-text">3.2.4 GET 和 POST 方法的区别</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">5.</span> <span class="nav-text">3.3 HTTP 状态码</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-1-%E4%BB%80%E4%B9%88%E6%98%AF-HTTP-%E7%8A%B6%E6%80%81%E7%A0%81"><span class="nav-number">5.1.</span> <span class="nav-text">3.3.1 什么是 HTTP 状态码</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">6.</span> <span class="nav-text">3.3.2 状态码分类</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-3-%E5%B8%B8%E8%A7%81%E7%9A%84%E7%8A%B6%E6%80%81%E7%A0%81"><span class="nav-number">6.1.</span> <span class="nav-text">3.3.3 常见的状态码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-4-200-OK"><span class="nav-number">6.2.</span> <span class="nav-text">3.3.4 200 (OK)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-5-204%EF%BC%88No-Content%EF%BC%8C%E6%B2%A1%E6%9C%89%E5%86%85%E5%AE%B9%EF%BC%89"><span class="nav-number">6.3.</span> <span class="nav-text">3.3.5 204（No Content，没有内容）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-6-206-Partial-Content%EF%BC%8C%E9%83%A8%E5%88%86%E5%86%85%E5%AE%B9%EF%BC%89"><span class="nav-number">6.4.</span> <span class="nav-text">3.3.6 206 ( Partial Content，部分内容）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-7-301-Moved-Permanently"><span class="nav-number">6.5.</span> <span class="nav-text">3.3.7 301 (Moved Permanently)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-8-302-Found"><span class="nav-number">6.6.</span> <span class="nav-text">3.3.8 302 ( Found )</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-9-301-%E5%92%8C-302-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">6.7.</span> <span class="nav-text">3.3.9 301 和 302 的区别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-10-304-Not-Modified"><span class="nav-number">6.8.</span> <span class="nav-text">3.3.10 304 (Not Modified)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-11-400-Bad-Request"><span class="nav-number">6.9.</span> <span class="nav-text">3.3.11 400 (Bad Request)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-12-401%EF%BC%88Unauthorized"><span class="nav-number">6.10.</span> <span class="nav-text">3.3.12 401（Unauthorized)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-13-403-Forbidden"><span class="nav-number">6.11.</span> <span class="nav-text">3.3.13 403 (Forbidden)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-14-404-Not-Found"><span class="nav-number">6.12.</span> <span class="nav-text">3.3.14 404 ( Not Found )</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-15-500-Internal-Server-Error"><span class="nav-number">6.13.</span> <span class="nav-text">3.3.15 500 (Internal Server Error)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-16-503%EF%BC%88Server-Unavailable%EF%BC%89"><span class="nav-number">6.14.</span> <span class="nav-text">3.3.16 503（Server Unavailable）</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="反骨仔"
+      src="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+  <p class="site-author-name" itemprop="name">反骨仔</p>
+  <div class="site-description" itemprop="description">一个业余的 .NET Core 攻城狮</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/liqingwen2015" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;liqingwen2015" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://gitee.com/liqingwen" title="Gitee → https:&#x2F;&#x2F;gitee.com&#x2F;liqingwen" rel="noopener" target="_blank"><i class="fab fa-instagram fa-fw"></i>Gitee</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:liqingwen2013@outlook.com" title="E-Mail → mailto:liqingwen2013@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://669.icu/" title="http:&#x2F;&#x2F;669.icu" rel="noopener" target="_blank">技术总舵</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://toolbox.669.icu/" title="http:&#x2F;&#x2F;toolbox.669.icu" rel="noopener" target="_blank">Toolbox</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备20021676号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">反骨仔</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1279567760&web_id=1279567760"></script>
+  </div>
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="100" alpha="0.5" zIndex="-1" src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-ribbon@1/canvas-ribbon.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three-waves.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/canvas_lines.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

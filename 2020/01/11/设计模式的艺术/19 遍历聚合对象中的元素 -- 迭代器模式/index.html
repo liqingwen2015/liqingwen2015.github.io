@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/docker-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/docker-16x16.png">
+  <link rel="mask-icon" href="/images/docker.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.669.icu","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":true,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true},"motion":{"enable":true,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="可以能够电视机看成一个存储电视频道的集合对象，通过遥控器可以对电视机中的电视频道几何进行操作，例如返回上一个频道、跳转到下一个频道或者跳转至指定的频道。遥控器为操作电视频道带来很大方便，用户并不需要知道这些频道到底如何存储在电视机中。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="19 遍历聚合对象中的元素 -- 迭代器模式">
+<meta property="og:url" content="http://blog.669.icu/2020/01/11/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%9A%84%E8%89%BA%E6%9C%AF/19%20%E9%81%8D%E5%8E%86%E8%81%9A%E5%90%88%E5%AF%B9%E8%B1%A1%E4%B8%AD%E7%9A%84%E5%85%83%E7%B4%A0%20--%20%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/index.html">
+<meta property="og:site_name" content="反骨仔">
+<meta property="og:description" content="可以能够电视机看成一个存储电视频道的集合对象，通过遥控器可以对电视机中的电视频道几何进行操作，例如返回上一个频道、跳转到下一个频道或者跳转至指定的频道。遥控器为操作电视频道带来很大方便，用户并不需要知道这些频道到底如何存储在电视机中。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204111019763.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204111104927.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204132427390.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204133648768.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204133706031.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204134451873.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204134519712.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204183604643.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20201206165438386.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20201206165450529.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20201206165754987.png">
+<meta property="article:published_time" content="2020-01-10T17:25:00.000Z">
+<meta property="article:modified_time" content="2021-01-12T07:09:41.000Z">
+<meta property="article:author" content="反骨仔">
+<meta property="article:tag" content="迭代器">
+<meta property="article:tag" content="设计模式">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204111019763.png">
+
+<link rel="canonical" href="http://blog.669.icu/2020/01/11/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%9A%84%E8%89%BA%E6%9C%AF/19%20%E9%81%8D%E5%8E%86%E8%81%9A%E5%90%88%E5%AF%B9%E8%B1%A1%E4%B8%AD%E7%9A%84%E5%85%83%E7%B4%A0%20--%20%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>19 遍历聚合对象中的元素 -- 迭代器模式 | 反骨仔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="反骨仔" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">反骨仔</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">一个业余的 .NET Core 攻城狮</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/liqingwen2015" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://blog.669.icu/2020/01/11/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%9A%84%E8%89%BA%E6%9C%AF/19%20%E9%81%8D%E5%8E%86%E8%81%9A%E5%90%88%E5%AF%B9%E8%B1%A1%E4%B8%AD%E7%9A%84%E5%85%83%E7%B4%A0%20--%20%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+      <meta itemprop="name" content="反骨仔">
+      <meta itemprop="description" content="一个业余的 .NET Core 攻城狮">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="反骨仔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          19 遍历聚合对象中的元素 -- 迭代器模式
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-11 01:25:00" itemprop="dateCreated datePublished" datetime="2020-01-11T01:25:00+08:00">2020-01-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-01-12 15:09:41" itemprop="dateModified" datetime="2021-01-12T15:09:41+08:00">2021-01-12</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8A%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%9A%84%E8%89%BA%E6%9C%AF%EF%BC%9A%E8%BD%AF%E4%BB%B6%E5%BC%80%E5%8F%91%E4%BA%BA%E5%91%98%E5%86%85%E5%8A%9F%E4%BF%AE%E7%82%BC%E4%B9%8B%E9%81%93%E3%80%8B/" itemprop="url" rel="index"><span itemprop="name">《设计模式的艺术：软件开发人员内功修炼之道》</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8A%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E7%9A%84%E8%89%BA%E6%9C%AF%EF%BC%9A%E8%BD%AF%E4%BB%B6%E5%BC%80%E5%8F%91%E4%BA%BA%E5%91%98%E5%86%85%E5%8A%9F%E4%BF%AE%E7%82%BC%E4%B9%8B%E9%81%93%E3%80%8B/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">设计模式</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>可以能够电视机看成一个存储电视频道的集合对象，通过遥控器可以对电视机中的电视频道几何进行操作，例如返回上一个频道、跳转到下一个频道或者跳转至指定的频道。遥控器为操作电视频道带来很大方便，用户并不需要知道这些频道到底如何存储在电视机中。</p>
+<a id="more"></a>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204111019763.png" alt="image-20201204111019763"></p>
+<p>在软件开发中，也存在大量类似电视机一样的类，它们可以存储多个成员对象（元素），这些类通常称为聚合类（Aggregate Classes），对应的对象称为聚合对象。为了更加方便地操作这些聚合对象，同时可以很灵活地为聚合对象增加不同的遍历方法，也需要类似电视机遥控器一样的角色，可以访问一个聚合对象中的元素但又不需要暴露它的内部结构。</p>
+<p>通过如迭代器，客户端无需了解聚合对象的内部结构即可实现对聚合对象中成员的遍历，还可以根据需要很方便地增加新的遍历方式。</p>
+<h1>19.1 销售管理系统中数据的遍历</h1>
+<p>Sunny 发现经常需要对系统中的商品数据、客户数据等进行遍历，为了复用这些遍历代码，Sunny 公司开发人员设计了一个抽象的数据聚合类 AbstractObjectList，而将存储商品和客户等数据的类作为其子类。AbstractObjectList 类如图。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204111104927.png" alt="image-20201204111104927"></p>
+<p>List 类型的对象 objects 用于存储数据，AbstractObjectList 类的方法。</p>
+<p>AbstractObjectList 方法说明</p>
+<table>
+<thead>
+<tr>
+<th>方法名</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AbstractObjectList()</td>
+<td>构造方法，用于给 objects 对象赋值</td>
+</tr>
+<tr>
+<td>addObject()</td>
+<td>增加元素</td>
+</tr>
+<tr>
+<td>removeObject()</td>
+<td>删除元素</td>
+</tr>
+<tr>
+<td>getObjects()</td>
+<td>获取所有元素</td>
+</tr>
+<tr>
+<td>next()</td>
+<td>移至下一个元素</td>
+</tr>
+<tr>
+<td>isLast()</td>
+<td>判断当前元素是否是最后一个元素</td>
+</tr>
+<tr>
+<td>previous()</td>
+<td>移至上一个元素</td>
+</tr>
+<tr>
+<td>isFirst()</td>
+<td>判断当前元素是否是第一个元素</td>
+</tr>
+<tr>
+<td>getNextItem()</td>
+<td>获取下一个元素</td>
+</tr>
+<tr>
+<td>getPreviousItem()</td>
+<td>获取上一个元素</td>
+</tr>
+</tbody>
+</table>
+<p>AbstractObjectList 类的子类 ProductList 和 CustomerList 分别用于存储商品数据和客户数据。</p>
+<p>目前存在的问题：</p>
+<ol>
+<li>addObject()，removeObject() 等方法用于管理数据，而 next()、isLast()、previous()、isFirst() 等方法用于遍历数据。
+<ul>
+<li>导致聚合类的职责过重：既负责存储和管理数据，又负责遍历数据，违反单一职责原则</li>
+</ul>
+</li>
+<li>如果将抽象聚合类声明为一个接口，则在这个接口中充斥着大量方法，不利于子类实现，违反了接口隔离原则</li>
+<li>如果将所有的遍历操作都交给子类来实现，将导致子类代码庞大，而且必须暴露 AbstractObjectList 的内部存储细节，向子类公开自己的私有属性，否则子类无法实施对数据的遍历，这将破坏 AbstractObjectList 类的封装性</li>
+</ol>
+<p>如何解决上述问题：</p>
+<ul>
+<li>将聚合类中负责遍历数据的方法提取出来，封装到专门的类中，实现数据存储和数据遍历分离，无需暴露聚合类的内部属性即可对其进行操作</li>
+</ul>
+<h1>19.2 迭代器模式概述</h1>
+<p>聚合对象拥有两个职责，一是存储数据；二是遍历数据。从依赖性来看，前者是聚合对象的基本职责；而后者近视可变化的，又是可分离的。因此，可以将遍历数据的行为从聚合对象中分离出来，封装在一个被称之为“迭代器”的对象中，由迭代器来提供遍历聚合对象内部数据的行为，可以简化聚合对象的设计。</p>
+<blockquote>
+<p>迭代器模式（Iterator Pattern）：提供一种方法来访问聚合对象，而不用暴露这个对象的内部表示，其别名为游标（Cursor）。</p>
+<p>迭代器模式是这一种对象行为型模式。</p>
+</blockquote>
+<p>迭代器模式中包含聚合和迭代器两个层次结构。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204132427390.png" alt="image-20201204132427390"></p>
+<p>角色：</p>
+<ol>
+<li>Iterator（抽象迭代器）：定义了访问和遍历元素的接口，声明了用于遍历数据元素的方法
+<ol>
+<li>first()：获取第一个元素</li>
+<li>next()：访问下一个元素</li>
+<li>hasNext()：是否还有下一个元素</li>
+<li>currentItem()：获取当前元素</li>
+</ol>
+</li>
+<li>ConcreteIterator（具体迭代器）：实现了抽象迭代器接口，完成对聚合对象的遍历，同时在具体迭代器中通过游标来记录在聚合对象中所处的当前位置，在具体实现时，游标通常是一个表示位置的非负整数</li>
+<li>Aggregate（抽象聚合类）：用于存储和管理元素对象，声明一个  createIterator() 方法用于创建一个迭代器对象，充当抽象迭代器工厂角色</li>
+<li>ConcreteAggregate（具体聚合类）：实现了在抽象聚合类中声明的 createIterator() 方法，该方法返回一个与该具体聚合类对应的具体迭代器 ConcreteIterator 实例。</li>
+</ol>
+<p>在迭代器模式中，提供了一个外部的迭代器来对聚合对象进行访问和遍历，迭代器定义了一个访问该聚合元素的接口，并且可以跟踪当前遍历的元素，了解哪些元素已经遍历过而哪些没有。迭代器的引入，将使得对一个复杂聚合对象的操作变得简单。</p>
+<p>在迭代器模式中应用了工厂方法模式，抽象迭代器对应于抽象产品角色，具体迭代器对应于具体产品角色，抽象聚合类对应于抽象工厂角色，具体聚合类对应于具体工厂角色。</p>
+<p>在抽象迭代器中声明了用于遍历聚合对象中所存储元素的方法：</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204133648768.png" alt="image-20201204133648768"></p>
+<p>在具体迭代器中将实现抽象迭代器声明的遍历数据的方法：</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204133706031.png" alt="image-20201204133706031"></p>
+<p>【注意】</p>
+<p>抽象迭代器接口的设计非常重要，一方面需要充分满足各种遍历操作的要求，尽量为各种遍历方法都提供声明，另一方面又不能包含太多方法，接口中方法太多将给子类的实现带来麻烦。因此，可以考虑使用抽象类来设计抽象迭代器，在抽象类中为每一个方法提供一个空的默认实现。如果需要在具体迭代器中为聚合对象增加全新的遍历操作，则必须修改抽象迭代器和具体迭代器的源代码，这将违反开闭原则。</p>
+<p>聚合类用于存储数据并负责创建迭代器对象：</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204134451873.png" alt="image-20201204134451873"></p>
+<p>具体聚合类作为抽象聚合类的子类，一方面负责存储数据，另一方面实现了在抽象聚合类中声明的工厂方法 createIterator()，用于返回一个与该具体聚合类对应的具体迭代器对象：</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204134519712.png" alt="image-20201204134519712"></p>
+<p>【思考】如何理解迭代器模式中具体你聚合类与具体迭代器类之间存在的依赖关系和关联关系？</p>
+<h1>19.3 完整解决方案</h1>
+<p>重构后：</p>
+<ul>
+<li>AbstractObjectList：抽象聚合类</li>
+<li>ProductList：具体聚合类</li>
+<li>AbstractIterator：抽象迭代器</li>
+<li>ProductIterator：具体迭代器</li>
+</ul>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20201204183604643.png" alt="image-20201204183604643"></p>
+<p>AbstractObjectList.cs</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title">AbstractObjectList</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">protected</span> ArrayList Objects;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="title">AbstractObjectList</span>(<span class="params">ArrayList objects</span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        Objects = objects;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Add</span>(<span class="params"><span class="built_in">object</span> obj</span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        Objects.Add(obj);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Remove</span>(<span class="params"><span class="built_in">object</span> obj</span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        Objects.Remove(obj);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> ArrayList <span class="title">Get</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        <span class="keyword">return</span> Objects;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>IAbstractIterator.cs</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 抽象迭代器</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">interface</span> <span class="title">IAbstractIterator</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 移动到下一个元素</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">Next</span>(<span class="params"></span>)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 判断是否为最后一个元素</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;returns&gt;</span><span class="doctag">&lt;/returns&gt;</span></span></span><br><span class="line">    <span class="function"><span class="built_in">bool</span> <span class="title">IsLast</span>(<span class="params"></span>)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 移动到上一个元素</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">Previous</span>(<span class="params"></span>)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 第一个元素</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;returns&gt;</span><span class="doctag">&lt;/returns&gt;</span></span></span><br><span class="line">    <span class="function"><span class="built_in">bool</span> <span class="title">IsFirst</span>(<span class="params"></span>)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 获取下一个元素</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;returns&gt;</span><span class="doctag">&lt;/returns&gt;</span></span></span><br><span class="line">    <span class="function"><span class="built_in">object</span> <span class="title">GetNextItem</span>(<span class="params"></span>)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 获取上一个元素</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;returns&gt;</span><span class="doctag">&lt;/returns&gt;</span></span></span><br><span class="line">    <span class="function"><span class="built_in">object</span> <span class="title">GetPreviousItem</span>(<span class="params"></span>)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ProductIterator.cs</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">internal</span> <span class="keyword">class</span> <span class="title">ProductIterator</span> : <span class="title">IAbstractIterator</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">readonly</span> ProductList _productList;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">readonly</span> ArrayList _products;</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">int</span> _cursor1;</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">int</span> _cursor2;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ProductIterator</span>(<span class="params">ProductList productList</span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        _productList = productList;</span><br><span class="line">        _products = productList.Get();</span><br><span class="line">        _cursor2 = _products.Count - <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Next</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        <span class="keyword">if</span> (_cursor1 &lt; _products.Count)</span><br><span class="line">        &#123;</span><br><span class="line">            _cursor1++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="built_in">bool</span> <span class="title">IsLast</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        <span class="keyword">return</span> _cursor1 == _products.Count;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Previous</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        <span class="keyword">if</span> (_cursor2 &gt; <span class="number">-1</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            _cursor2--;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="built_in">bool</span> <span class="title">IsFirst</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        <span class="keyword">return</span> _cursor2 == <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="built_in">object</span> <span class="title">GetNextItem</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        <span class="keyword">return</span> _products[_cursor1];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="built_in">object</span> <span class="title">GetPreviousItem</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        <span class="keyword">return</span> _products[_cursor2];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ProductList.cs</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">internal</span> <span class="keyword">class</span> <span class="title">ProductList</span> : <span class="title">AbstractObjectList</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">ProductList</span>(<span class="params">ArrayList objects</span>) : <span class="title">base</span>(<span class="params">objects</span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> IAbstractIterator <span class="title">CreateIterator</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> ProductIterator(<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Program.cs</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title">Program</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span></span><br><span class="line"><span class="function"></span>    &#123;</span><br><span class="line">        <span class="keyword">var</span> products = <span class="keyword">new</span> ArrayList()</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;倚天剑&quot;</span>,</span><br><span class="line">            <span class="string">&quot;屠龙刀&quot;</span>,</span><br><span class="line">            <span class="string">&quot;断肠草&quot;</span>,</span><br><span class="line">            <span class="string">&quot;葵花宝典&quot;</span>,</span><br><span class="line">            <span class="string">&quot;四十二章经&quot;</span></span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">var</span> list = <span class="keyword">new</span> ProductList(products);</span><br><span class="line">        <span class="keyword">var</span> iterator = list.CreateIterator();</span><br><span class="line"></span><br><span class="line">        Console.WriteLine(<span class="string">&quot;正向遍历&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> ((!iterator.IsLast()))</span><br><span class="line">        &#123;</span><br><span class="line">            Console.WriteLine(iterator.GetNextItem() + <span class="string">&quot;,&quot;</span>);</span><br><span class="line">            iterator.Next();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Console.WriteLine();</span><br><span class="line">        Console.WriteLine(<span class="string">&quot;=================================&quot;</span>);</span><br><span class="line">        Console.WriteLine(<span class="string">&quot;逆向遍历：&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> (!iterator.IsFirst())</span><br><span class="line">        &#123;</span><br><span class="line">            Console.WriteLine(iterator.GetPreviousItem() + <span class="string">&quot;,&quot;</span>);</span><br><span class="line">            iterator.Previous();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果需要增加一个新的具体聚合类，例如客户数据聚合类，并且需要为客户数据聚合类提供不同于商品数据聚合类的正向遍历和逆向遍历操作，只需要增加一个新的聚合子类和一个新的具体迭代器类即可，原有类库代码无需修改，符合开闭原则；如果需要为 ProductList 类更换一个迭代器，只需要增加一个新的具体迭代器类作为抽象迭代器类的子类，重新实现遍历方法，原有迭代器代码无需修改，从迭代器的角度来看，也符合开闭原则；但是如果要在迭代器中增加新的方法，则需要修改抽象迭代器源代码，将违背开闭原则。</p>
+<h1>19.4 使用内部类实现迭代器</h1>
+<p>具体迭代器类和具体聚合类之间存在双重关系，其中一个关系为关联关系，在具体迭代器中需要维持一个对具体聚合对象的引用，该关联关系的目的是访问存储在聚合对象中的数据，以便于迭代器能够对这些数据进行遍历操作。除了使用关联关系外，为了能够让迭代器可以访问到聚合对象中的数据，可以将迭代器类设计为聚合类的内部类。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20201206165438386.png" alt="image-20201206165438386"></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20201206165450529.png" alt="image-20201206165450529"></p>
+<p>无论使用哪种实现细节，客户端代码都是一样的，也就是说客户端无需关心具体迭代器对象的创建细节，只需要通过调用工厂方法 createIterator() 即可得到一个可用的迭代器对象，这也是使用工厂方法模式的好处，通过工厂来封装对象的创建过程，简化了客户端的调用</p>
+<h1>19.5 JDK 内置迭代器</h1>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20201206165754987.png" alt="image-20201206165754987"></p>
+<p>Collection 接口和 Iterator 接口充当了迭代器模式的抽象层</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>抽象聚合类</td>
+<td>Collection 接口</td>
+</tr>
+<tr>
+<td>抽象迭代器</td>
+<td>Iterator 接口</td>
+</tr>
+<tr>
+<td>具体聚合类</td>
+<td>Collection 接口的子类</td>
+</tr>
+</tbody>
+</table>
+<p>【思考】</p>
+<p>为什么使用 iterator() 方法创建的迭代器无法实现逆向遍历？</p>
+<h1>19.6 迭代器模式总结</h1>
+<p>通过引入迭代器可以将数据的遍历功能从聚合对象中分离出来，聚合对象只负责存储数据，遍历数据由迭代器来完成。</p>
+<p>很多编程语言的类库已经实现了迭代器模式。</p>
+<h2 id="主要优点">主要优点</h2>
+<ol>
+<li>支持以不同的方式遍历一个聚合对象，在同一个聚合对象上可以定义多种遍历方式。在迭代器模式中只需要用一个不同的迭代器来替换原有迭代器即可改变遍历算法，也可以自己定义迭代器的子类以支持新的遍历方式</li>
+<li>迭代器简化了聚合类。由于引入了迭代器，在原有的聚合对象中不需要再自行提供数据遍历等方法，这样可以简化聚合类的设计</li>
+<li>在迭代器模式中，由于引入了抽象层，增加新的聚合类和迭代器类都很方便，无需修改原有代码，满足开闭原则的要求</li>
+</ol>
+<h2 id="主要缺点">主要缺点</h2>
+<ol>
+<li>由于迭代器模式将存储数据和遍历数据的职责分离，增加新的聚合类需要对应增加新的迭代器类，累的个数成对增加，这在一定程度上增加了系统的复杂性</li>
+<li>抽象迭代器的设计难度较大，需要充分考虑到系统将来的扩展。</li>
+</ol>
+<h2 id="适用场景">适用场景</h2>
+<ol>
+<li>访问一个聚合对象的内容而无需暴露它的内部表示。将聚合对象的访问与内部数据的存储分离，使用访问聚合对象时无须了解其内部实现细节</li>
+<li>需要为一个聚合对象提供多种遍历方式</li>
+<li>为遍历不同的聚合结构提供一个统一的接口，在改接口的实现类中为不同的聚合结构提供不同的遍历方式，而客户端可以一致性地操作该接口</li>
+</ol>
+<h1>参考</h1>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%BF%AD%E4%BB%A3%E5%99%A8/" rel="tag"># 迭代器</a>
+              <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag"># 设计模式</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/01/11/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BA%20Docker/05%20Docker%20%E5%BC%95%E6%93%8E/" rel="prev" title="05 Docker 引擎">
+      <i class="fa fa-chevron-left"></i> 05 Docker 引擎
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">19.1 销售管理系统中数据的遍历</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">19.2 迭代器模式概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">19.3 完整解决方案</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">19.4 使用内部类实现迭代器</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">5.</span> <span class="nav-text">19.5 JDK 内置迭代器</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">6.</span> <span class="nav-text">19.6 迭代器模式总结</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E8%A6%81%E4%BC%98%E7%82%B9"><span class="nav-number">6.1.</span> <span class="nav-text">主要优点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E8%A6%81%E7%BC%BA%E7%82%B9"><span class="nav-number">6.2.</span> <span class="nav-text">主要缺点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">6.3.</span> <span class="nav-text">适用场景</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="反骨仔"
+      src="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+  <p class="site-author-name" itemprop="name">反骨仔</p>
+  <div class="site-description" itemprop="description">一个业余的 .NET Core 攻城狮</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/liqingwen2015" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;liqingwen2015" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://gitee.com/liqingwen" title="Gitee → https:&#x2F;&#x2F;gitee.com&#x2F;liqingwen" rel="noopener" target="_blank"><i class="fab fa-instagram fa-fw"></i>Gitee</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:liqingwen2013@outlook.com" title="E-Mail → mailto:liqingwen2013@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://669.icu/" title="http:&#x2F;&#x2F;669.icu" rel="noopener" target="_blank">技术总舵</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://toolbox.669.icu/" title="http:&#x2F;&#x2F;toolbox.669.icu" rel="noopener" target="_blank">Toolbox</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备20021676号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">反骨仔</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1279567760&web_id=1279567760"></script>
+  </div>
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="100" alpha="0.5" zIndex="-1" src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-ribbon@1/canvas-ribbon.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three-waves.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/canvas_lines.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

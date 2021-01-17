@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/docker-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/docker-16x16.png">
+  <link rel="mask-icon" href="/images/docker.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.669.icu","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":true,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true},"motion":{"enable":true,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="JMeter 是一款优秀的开源测试工具，广泛用于接口测试和性能测试。熟练使用 JMeter 后，能用 JMeter 搞定的事情就不必使用 LoadRunner 了。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="18 JMeter 工具使用介绍">
+<meta property="og:url" content="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/18%20JMeter%20%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8%E4%BB%8B%E7%BB%8D/index.html">
+<meta property="og:site_name" content="反骨仔">
+<meta property="og:description" content="JMeter 是一款优秀的开源测试工具，广泛用于接口测试和性能测试。熟练使用 JMeter 后，能用 JMeter 搞定的事情就不必使用 LoadRunner 了。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110210259147.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110231930902.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110231939745.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110232134735.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110232143415.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110232411679.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110232432701.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110232810826.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002207465.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002330135.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002353010.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002826912.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002837745.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002846513.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002942919.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111003019683.png">
+<meta property="article:published_time" content="2020-01-08T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-17T04:18:33.471Z">
+<meta property="article:author" content="反骨仔">
+<meta property="article:tag" content="http">
+<meta property="article:tag" content="抓包">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110210259147.png">
+
+<link rel="canonical" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/18%20JMeter%20%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8%E4%BB%8B%E7%BB%8D/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>18 JMeter 工具使用介绍 | 反骨仔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="反骨仔" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">反骨仔</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">一个业余的 .NET Core 攻城狮</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/liqingwen2015" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/18%20JMeter%20%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8%E4%BB%8B%E7%BB%8D/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+      <meta itemprop="name" content="反骨仔">
+      <meta itemprop="description" content="一个业余的 .NET Core 攻城狮">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="反骨仔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          18 JMeter 工具使用介绍
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-09 00:00:00" itemprop="dateCreated datePublished" datetime="2020-01-09T00:00:00+08:00">2020-01-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-01-17 12:18:33" itemprop="dateModified" datetime="2021-01-17T12:18:33+08:00">2021-01-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8AHTTP-%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98%E3%80%8B/" itemprop="url" rel="index"><span itemprop="name">《HTTP 抓包实战》</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>JMeter 是一款优秀的开源测试工具，广泛用于接口测试和性能测试。熟练使用 JMeter 后，能用 JMeter 搞定的事情就不必使用 LoadRunner 了。</p>
+<a id="more"></a>
+<h1>18.1 JMeter 介绍</h1>
+<p>Apache JMeter 是 Apache 组织开发的基于 Java 的压力测试工具，用于对软件做压力测试。它最初被设计用于 Web 应用测试，后来才扩展到其他测试领域。</p>
+<p>JMeter 给大多数人的第一印象是性能测试工具。实际上，性能测试就是调用 Web 接口。所以现在经常用 JMeter 测试 Web 接口，用 JMeter 来测试 Restful API 非常好用 。</p>
+<p>如果使用 JMeter 去对 Web 进行功能测试或者性能测试，应该熟练掌握 HTTP 协议。</p>
+<h1>18.2 JMeter 的下载和运行</h1>
+<p>JMeter 的官方网站是 <a target="_blank" rel="noopener" href="http://jmeter.apache.org/%E3%80%82">http://jmeter.apache.org/。</a></p>
+<p>JMeter 由 Java 语言开发 。JMeter3.2 版本的运行需要有 Java8 或者以上版本的环境，需要安装好 JavaJDK，配置好环境变量。关于 Java 环境的安装请参考其他资料，此处不再作详细讲解 。</p>
+<p>JMeter 不需要安装，只需要配置好 JAVA 环境，解压后即可直接运行。将“apache-jmeter-3.2.zip”文件解压，进入解压目录“…/apache-jmeter-3.2/bin/”下双击 jmeter.bat，就能启动 JMeter。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110210259147.png" alt="image-20210110210259147"></p>
+<p>JMeter 是支持中文的。启动 JMeter 后，单击 Options -&gt; Choose Language 来选择语言。</p>
+<h1>18.3 创建测试任务</h1>
+<p>在 JMeter 中，任何类型的测试都需要先创建线程组，一个线程组可以看作一个测试任务 。</p>
+<p>添加线程组，用鼠标右键单击 “测试计划”，在快捷菜单中单击添加 -&gt; Threads(Users)  -&gt; 线程组。</p>
+<p>注意：在 JMeter 中，任何内容都应该放在线程组中。</p>
+<p>设置线程组 。 线程组主要包括 3 个参数，</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110231930902.png" alt="image-20210110231930902"></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110231939745.png" alt="image-20210110231939745"></p>
+<ol>
+<li>线程数：一个线程代表一个虚拟用户</li>
+<li>Ramp-Up Period(in seconds）：设置线程的启动时长，单位为 s。如果线程数是 100，启动时长为 s，那么需要 5s 启动 100 个线程，平均每秒启动 20 个线程</li>
+<li>循环次数：每个线程发送请求的次数。如果这个线程组中有 5 个 HTTP 请求，循环次数为 3 的话，那么 一个线程会发送 5 × 3=15 个 HTTP 请求。如果选中了“永远”复选框，那么所有的线程会无限循环发送请求，直到手动单击工具栏上的停止按钮 。</li>
+</ol>
+<p>如果用来做功能测试／接口测试，那么应保持默认设置，线程数设置为 1，Ramp-up Period( in seconds）设置为 1，循环次数也设置为 1。</p>
+<h1>18.4 添加 HTTP 请求</h1>
+<p>构造出 一个 HTTP 请求的数据包 。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110232134735.png" alt="image-20210110232134735"></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110232143415.png" alt="image-20210110232143415"></p>
+<h1>18.5 实例：密码用 MD5 加密</h1>
+<p>有一个 MD5 在线网站，网址是 <a target="_blank" rel="noopener" href="http://www.md5.cz/%EF%BC%8C%E5%88%A9%E7%94%A8%E5%AE%83%E5%8F%AF%E4%BB%A5%E5%AF%B9%E6%88%91%E4%BB%AC%E7%9A%84%E5%AF%86%E7%A0%81%E8%BF%9B%E8%A1%8C%E6%95%A3%E5%88%97%E5%A4%84%E7%90%86">http://www.md5.cz/，利用它可以对我们的密码进行散列处理</a> 。 我们用 Fiddler 对这个网站进行抓包，然后用 JMeter 来实现。具体的操作步骤如下。</p>
+<ol>
+<li>首先启动 Fiddler，打开浏览器，输入 <a target="_blank" rel="noopener" href="http://www.md5.cz/%EF%BC%8C%E5%9C%A8%E9%A1%B5%E9%9D%A2%E4%B8%AD%E8%BE%93%E5%85%A5%E2%80%9Cpassword">http://www.md5.cz/，在页面中输入“password</a> ”，然后单击按钮“ hash darling, hash!”。</li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110232411679.png" alt="image-20210110232411679"></p>
+<p>浏览器发出的 HTTP 请求报文如下 ：</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110232432701.png" alt="image-20210110232432701"></p>
+<ol start="2">
+<li>
+<p>现在我们需要使用 JMeter 发送一个一模一样的 HTTP 请求报文。启动 JMeter，添加线程组，添加一个 HTTP 请求。</p>
+<p>一个网址被分割成了 4 部分。</p>
+<p>协议（http）＋服务器名称或 IP (<a target="_blank" rel="noopener" href="http://www.md5.cz">www.md5.cz</a>) ＋端口号（默认是 80 ，不需要填写）＋路径（/getmd5 .php ) = http ://www.md5.cz!getmd5 .php 。</p>
+</li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110232810826.png" alt="image-20210110232810826"></p>
+<p>​	这个 HTTP 是 POST 方法，是有 Body 的。我们选择 POST 方法，并且在 Body Data 中填写“ what=password ”</p>
+<ol start="3">
+<li>添加 HTTP Header。选择这个 HTTP 请求，用鼠标右键单击，选择添加·＞配置元件-＞HTTP 信息头管理器</li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002207465.png" alt="image-20210111002207465"></p>
+<p>有个简单的办法可以添加 HTTP Header （信息头），即先在 Fiddler 中复制所有的 HTTP Header，然后单击“ Add from Clipboard”。</p>
+<ol start="4">
+<li>HTTP 信息头管理器中删除 Host。JMeter 会自动帮你添加 Host ，所以不需要手动添加。如果己经手动添加，则需要删除。</li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002330135.png" alt="image-20210111002330135"></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002353010.png" alt="image-20210111002353010"></p>
+<ol start="5">
+<li>添加察看结果树。选择线程组，用鼠标右键选择添加 –＞监听器 -&gt; 察看结果树。</li>
+<li>运行 JMeter，单击工具栏上的绿色按钮，可以运行脚本，系统会提示你保存脚本 。</li>
+<li>通过结果树，我们可以看到我们发出的 HTTP？请求，以及 Web 服务器返回的 HTTP 响应。</li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002826912.png" alt="image-20210111002826912"></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002837745.png" alt="image-20210111002837745"></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002846513.png" alt="image-20210111002846513"></p>
+<p>password 被散列（hash）后 ， 变成 5f4xxxxxxxxxxx。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111002942919.png" alt="image-20210111002942919"></p>
+<ol start="8">
+<li>JMeter 中查看 HTTP 的响应。我们可以使用 多种方式来查看 HTTP 响应， 如果 HTTP 晌应是一个 HTML 文档，则可 以使用 HTML 方式 ；如果 HTTP 响应是一个 JSON 文件，则可以使用 JSON Path Tester 方式查看。</li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210111003019683.png" alt="image-20210111003019683"></p>
+<h1>参考</h1>
+<p>《HTTP 抓包实战》</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/http/" rel="tag"># http</a>
+              <a href="/tags/%E6%8A%93%E5%8C%85/" rel="tag"># 抓包</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/20%20JMeter%20%E4%B8%AD%20Bean%20Shell%20%E7%9A%84%E7%94%A8%E6%B3%95/" rel="prev" title="20 JMeter 中 Bean Shell 的用法">
+      <i class="fa fa-chevron-left"></i> 20 JMeter 中 Bean Shell 的用法
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/17%20%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E5%92%8C%E6%8E%A5%E5%8F%A3%E6%B5%8B%E8%AF%95/" rel="next" title="17 自动化测试和接口测试">
+      17 自动化测试和接口测试 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">18.1 JMeter 介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">18.2 JMeter 的下载和运行</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">18.3 创建测试任务</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">18.4 添加 HTTP 请求</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">5.</span> <span class="nav-text">18.5 实例：密码用 MD5 加密</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="反骨仔"
+      src="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+  <p class="site-author-name" itemprop="name">反骨仔</p>
+  <div class="site-description" itemprop="description">一个业余的 .NET Core 攻城狮</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/liqingwen2015" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;liqingwen2015" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://gitee.com/liqingwen" title="Gitee → https:&#x2F;&#x2F;gitee.com&#x2F;liqingwen" rel="noopener" target="_blank"><i class="fab fa-instagram fa-fw"></i>Gitee</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:liqingwen2013@outlook.com" title="E-Mail → mailto:liqingwen2013@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://669.icu/" title="http:&#x2F;&#x2F;669.icu" rel="noopener" target="_blank">技术总舵</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://toolbox.669.icu/" title="http:&#x2F;&#x2F;toolbox.669.icu" rel="noopener" target="_blank">Toolbox</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备20021676号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">反骨仔</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1279567760&web_id=1279567760"></script>
+  </div>
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="100" alpha="0.5" zIndex="-1" src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-ribbon@1/canvas-ribbon.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three-waves.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/canvas_lines.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

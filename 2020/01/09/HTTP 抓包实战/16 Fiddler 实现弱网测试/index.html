@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/docker-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/docker-16x16.png">
+  <link rel="mask-icon" href="/images/docker.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.669.icu","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":true,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true},"motion":{"enable":true,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在使用 APP 过程中，经常会碰到网速慢 ，甚至网络中断的场景，影响用户体验。这种网速慢和网络中断的情况，我们称之为弱网。要模拟出弱网的环境，就需要用到 Fiddler。使用 Fiddler 能让弱网测试变得非常简单，Fiddler 是通过延迟发送或接收数据的时间来模拟限速的。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="16 Fiddler 实现弱网测试">
+<meta property="og:url" content="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/16%20Fiddler%20%E5%AE%9E%E7%8E%B0%E5%BC%B1%E7%BD%91%E6%B5%8B%E8%AF%95/index.html">
+<meta property="og:site_name" content="反骨仔">
+<meta property="og:description" content="在使用 APP 过程中，经常会碰到网速慢 ，甚至网络中断的场景，影响用户体验。这种网速慢和网络中断的情况，我们称之为弱网。要模拟出弱网的环境，就需要用到 Fiddler。使用 Fiddler 能让弱网测试变得非常简单，Fiddler 是通过延迟发送或接收数据的时间来模拟限速的。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110201716375.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210117015755302.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110202151599.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110202545555.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110202622849.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110202852593.png">
+<meta property="article:published_time" content="2020-01-08T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-17T04:18:43.954Z">
+<meta property="article:author" content="反骨仔">
+<meta property="article:tag" content="http">
+<meta property="article:tag" content="抓包">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110201716375.png">
+
+<link rel="canonical" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/16%20Fiddler%20%E5%AE%9E%E7%8E%B0%E5%BC%B1%E7%BD%91%E6%B5%8B%E8%AF%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>16 Fiddler 实现弱网测试 | 反骨仔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="反骨仔" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">反骨仔</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">一个业余的 .NET Core 攻城狮</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/liqingwen2015" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/16%20Fiddler%20%E5%AE%9E%E7%8E%B0%E5%BC%B1%E7%BD%91%E6%B5%8B%E8%AF%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+      <meta itemprop="name" content="反骨仔">
+      <meta itemprop="description" content="一个业余的 .NET Core 攻城狮">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="反骨仔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          16 Fiddler 实现弱网测试
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-09 00:00:00" itemprop="dateCreated datePublished" datetime="2020-01-09T00:00:00+08:00">2020-01-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-01-17 12:18:43" itemprop="dateModified" datetime="2021-01-17T12:18:43+08:00">2021-01-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8AHTTP-%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98%E3%80%8B/" itemprop="url" rel="index"><span itemprop="name">《HTTP 抓包实战》</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在使用 APP 过程中，经常会碰到网速慢 ，甚至网络中断的场景，影响用户体验。这种网速慢和网络中断的情况，我们称之为弱网。要模拟出弱网的环境，就需要用到 Fiddler。使用 Fiddler 能让弱网测试变得非常简单，Fiddler 是通过延迟发送或接收数据的时间来模拟限速的。</p>
+<a id="more"></a>
+<h1>16.1 什么是弱网</h1>
+<p>随着国内移动端的迅速发展，大量的用户会在地铁、隧道、电梯和车库等场景下使用 APP。 这种弱网的场景下，网络会出现延时、中断和超时等情况 。</p>
+<p>APP 的开发人员和测试人员 需要针对这些场景，验 i正在弱网的情况下软件的处理机制，从而避免因用户体验不友好造成用户的流失。弱网测试属于健壮性测试。在弱网测试条件下，要测试产品的运行状态、处理机制、提示信息，以及网络恢复后的重连等 。</p>
+<p>一般来说，开发人员在 localhost 下调用程序，很难模拟用户真实使用情况，比如正在下载 JS 、css 等静态资源的时候页面的渲染情况。当网速很慢的情况下，我们希望看到的是先渲染出用户界面，而不是让用户看到一片空白。</p>
+<h1>16.2 弱网环境带来的问题</h1>
+<p>弱网的环境会带来一系列的问题，具体如下。</p>
+<ol>
+<li>操作时间慢。 用户在地铁里操作手机 APP，由于网络慢，页面加载不出来。原因可能是 API 在网络慢的情况下性能很差。用户在公交车上用手机 APP 看新闻，当公交车进入隧道的时候，网络变得很慢，APP 上的新闻 一直没法加载出来。我们需要测试每个 API 消耗的时间， 这个指标可以衡量 APP 性能的好坏。</li>
+<li>用户体验不好。 一个安卓手机用户使用 一款看小说的 APP 在地铁里看小说，当地铁进入隧道的时候，手机信号中断了。用户单击翻页，想看下一页的时候，因为网络中断，APP 的界面卡死并且闪退。原因是 APP 不稳定，没有处理好网络中断的情况 。</li>
+<li>非正常情况下，出现 Bug 的可能性会增加。 如一个电商的手机 APP 有秒杀优惠券的功能。一些 APP 用户在乘坐电梯的时候，使用 APP 来秒杀优惠券 。 单击秒杀优惠卷的按钮后，APP 响应缓慢。 于是，用户重复单击秒杀优惠券按钮。 这就造成了几乎同一时间，同一个用户有多个 HTTP 请求发送到服务器，形成了并发，结果用户抢到了多张优惠券。</li>
+</ol>
+<h1>16.3 弱网测试的目的</h1>
+<p>弱网测试的 目的是让 APP 在任何网络下都能表现自如，让开发人员能够预知 APP 在较差网络环境下的表现，提前发现问题 ，进行有针对性的优化。</p>
+<h1>16.4 弱网的场景</h1>
+<p>模拟出以下 3 种弱网场景：</p>
+<ol>
+<li>网络慢或延迟，导致加载时间长</li>
+<li>网络中断，Web 服务器返回 500 等状态码</li>
+<li>网络超时，HTTP 请求发出去后，很久都没有响应</li>
+</ol>
+<h1>16.5 Fiddler 模拟网络延迟</h1>
+<p>为了重现这些问题，我们需要用软件来模拟出网络慢的情况。我们可以用 Fiddler 来限速。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110201716375.png" alt="image-20210110201716375"></p>
+<p>已经讲过如何用 Fiddler 捕获手机 APP 的 HTTP 请求，在弱网测试中我们也需要捕获手机 APP 的 HTTP 请求，然后限速。</p>
+<p>【实例】当浏览器访问博客园网站的时候，用 Fiddler 来限速</p>
+<ol>
+<li>启动 Fiddler，选择 Rules -&gt; Performances -&gt; Simulate Modem Speeds</li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210117015755302.png" alt="image-20210117015755302"></p>
+<ol start="2">
+<li>打开浏览器，访问 <a target="_blank" rel="noopener" href="http://www.cnblogs.com/liqingwen/%E3%80%82%E4%BD%A0%E4%BC%9A%E5%8F%91%E7%8E%B0%E6%89%93%E5%BC%80%E7%BD%91%E9%A1%B5%E7%9A%84%E9%80%9F%E5%BA%A6%E5%BE%88%E6%85%A2">http://www.cnblogs.com/liqingwen/。你会发现打开网页的速度很慢</a></li>
+</ol>
+<h1>16.6 精确控制网速</h1>
+<p>我们还可以精确控制网速，可以通过修改 Fiddler Script 来实现。</p>
+<p>具体的操作步骤如下：</p>
+<ol>
+<li>启动 Fiddler，选择 Rules -&gt; Performances -&gt; Simulate Modem Speeds</li>
+<li>在 FiddlerScript 中找到如下一段代码：</li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110202151599.png" alt="image-20210110202151599"></p>
+<p>把数值改大 一点，比如修改为 oSession=[“request-trickle- delay”]=“900”，oSession[”response-trickle-delay&quot;]=“600”。修改完之后保存 Script。</p>
+<ol start="3">
+<li>
+<p>保存完之后，原本己经勾选的 Simulate Modem Speeds 会被取消勾选；再次选中 Rules -&gt; Performances -&gt; Simulate Modem Speeds。</p>
+</li>
+<li>
+<p>再次打开浏览器，访问 <a target="_blank" rel="noopener" href="http://www.cnblogs.com/tankxiao/%E3%80%82%E4%BD%A0%E4%BC%9A%E5%8F%91%E7%8E%B0%EF%BC%8C%E6%89%93%E5%BC%80%E7%BD%91%E9%A1%B5%E5%8F%98%E5%BE%97%E6%9B%B4%E6%85%A2%E4%BA%86%E3%80%82">http://www.cnblogs.com/tankxiao/。你会发现，打开网页变得更慢了。</a></p>
+</li>
+</ol>
+<p>网络取值的算法就是 1000/下载速度＝需要延迟的时间（ms），比如 50kbit/s 需要延迟 200ms 来接收数据 。</p>
+<h2 id="16-7-Fiddler-模拟网络中断">16.7 Fiddler 模拟网络中断</h2>
+<p>用 Fiddler 可以下断点，伪造 HTTP 响应。移动端发出的 HTTP 请求根本没有到达服务器，而是被 Fiddler 直接返回了 一个伪造的 HTTP 响应。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110202545555.png" alt="image-20210110202545555"></p>
+<p>Fiddler 具有下断点的功能，我们可以利用 Fiddler 直接返回 500、503 等各种状态码。</p>
+<p>具体做法是用 Fiddler 拦截住移动端发出 来的 HTTP 请求，然后在“ Choose Response &quot;选中需要返回的状态码并返回给移动客户端。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110202622849.png" alt="image-20210110202622849"></p>
+<h1>16.8 实例：Fiddler 返回 500 状态码</h1>
+<ol>
+<li>在桌面上新建一个 txt 文件，里面的内容如下：</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HTTP&#x2F;1.1 500 Internal Server Error</span><br><span class="line">Date: Fri, 11 Aug 2017 07 :25:35 GMT</span><br><span class="line">Content-Type: text&#x2F;html; char set&#x3D;utf 8</span><br><span class="line">Connection: keep-alive</span><br><span class="line">Vary: Accept -Encoding</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">this is 500 internal Server Error by Fiddler! tank</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>在 Fiddler 中设置断点，打开浏览器，访问 <a target="_blank" rel="noopener" href="http://www.cnblogs.com/tankxiao/p/7087990.html">http://www.cnblogs.com/tankxiao/p/7087990.html</a></li>
+<li>Fiddler 会拦截住这个请求，选择“ Find a file …“选择桌面上的 txt 文件，然后单击“Run to Comp letion ”</li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110202852593.png" alt="image-20210110202852593"></p>
+<ol start="4">
+<li>这样 Fiddler 就把 500 状态码，返回给了浏览器。</li>
+</ol>
+<h1>16.9 Fiddler 模拟网络超时</h1>
+<p>利用 Fiddler 下断点的功能拦截住移动客户端发出的 HTTP 请求，这样就相当于网络超时了，然后再检查客户端有没有重发或者超时的机制。</p>
+<h1>参考</h1>
+<p>《HTTP 抓包实战》</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/http/" rel="tag"># http</a>
+              <a href="/tags/%E6%8A%93%E5%8C%85/" rel="tag"># 抓包</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/19%20JMeter%20%E5%A4%A9%E6%B0%94%E6%8E%A5%E5%8F%A3%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95/" rel="prev" title="19 JMeter 天气接口自动化测试">
+      <i class="fa fa-chevron-left"></i> 19 JMeter 天气接口自动化测试
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/15%20Fiddler%20%E5%8F%91%E9%80%81%20HTTP%20%E8%AF%B7%E6%B1%82/" rel="next" title="15 Fiddler 发送 HTTP 请求">
+      15 Fiddler 发送 HTTP 请求 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">16.1 什么是弱网</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">16.2 弱网环境带来的问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">16.3 弱网测试的目的</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">16.4 弱网的场景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">5.</span> <span class="nav-text">16.5 Fiddler 模拟网络延迟</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">6.</span> <span class="nav-text">16.6 精确控制网速</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#16-7-Fiddler-%E6%A8%A1%E6%8B%9F%E7%BD%91%E7%BB%9C%E4%B8%AD%E6%96%AD"><span class="nav-number">6.1.</span> <span class="nav-text">16.7 Fiddler 模拟网络中断</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">7.</span> <span class="nav-text">16.8 实例：Fiddler 返回 500 状态码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">8.</span> <span class="nav-text">16.9 Fiddler 模拟网络超时</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">9.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="反骨仔"
+      src="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+  <p class="site-author-name" itemprop="name">反骨仔</p>
+  <div class="site-description" itemprop="description">一个业余的 .NET Core 攻城狮</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/liqingwen2015" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;liqingwen2015" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://gitee.com/liqingwen" title="Gitee → https:&#x2F;&#x2F;gitee.com&#x2F;liqingwen" rel="noopener" target="_blank"><i class="fab fa-instagram fa-fw"></i>Gitee</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:liqingwen2013@outlook.com" title="E-Mail → mailto:liqingwen2013@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://669.icu/" title="http:&#x2F;&#x2F;669.icu" rel="noopener" target="_blank">技术总舵</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://toolbox.669.icu/" title="http:&#x2F;&#x2F;toolbox.669.icu" rel="noopener" target="_blank">Toolbox</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备20021676号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">反骨仔</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1279567760&web_id=1279567760"></script>
+  </div>
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="100" alpha="0.5" zIndex="-1" src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-ribbon@1/canvas-ribbon.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three-waves.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/canvas_lines.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

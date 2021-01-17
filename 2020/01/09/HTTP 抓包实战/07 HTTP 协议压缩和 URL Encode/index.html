@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/docker-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/docker-16x16.png">
+  <link rel="mask-icon" href="/images/docker.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.669.icu","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":true,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true},"motion":{"enable":true,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="HTTP 压缩是指 Web 服务器和浏览器之间压缩传输“ 文本内容” 的方法。HTTP 采用通用的压缩算法，比如用 gzip 来压缩 HTTP、JavaScript、css 文件，能大大减少网络传输的数据量，提高了用户显示网页的速度。当然，这同时也会增加一点点服务器的开销。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="07 HTTP 协议压缩和 URL Encode">
+<meta property="og:url" content="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/07%20HTTP%20%E5%8D%8F%E8%AE%AE%E5%8E%8B%E7%BC%A9%E5%92%8C%20URL%20Encode/index.html">
+<meta property="og:site_name" content="反骨仔">
+<meta property="og:description" content="HTTP 压缩是指 Web 服务器和浏览器之间压缩传输“ 文本内容” 的方法。HTTP 采用通用的压缩算法，比如用 gzip 来压缩 HTTP、JavaScript、css 文件，能大大减少网络传输的数据量，提高了用户显示网页的速度。当然，这同时也会增加一点点服务器的开销。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109003334055.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109003617340.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109003651570.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109003956583.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109004146924.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109004526325.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109004612215.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109004727534.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109004839664.png">
+<meta property="article:published_time" content="2020-01-08T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-16T08:01:36.315Z">
+<meta property="article:author" content="反骨仔">
+<meta property="article:tag" content="http">
+<meta property="article:tag" content="抓包">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109003334055.png">
+
+<link rel="canonical" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/07%20HTTP%20%E5%8D%8F%E8%AE%AE%E5%8E%8B%E7%BC%A9%E5%92%8C%20URL%20Encode/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>07 HTTP 协议压缩和 URL Encode | 反骨仔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="反骨仔" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">反骨仔</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">一个业余的 .NET Core 攻城狮</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/liqingwen2015" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/07%20HTTP%20%E5%8D%8F%E8%AE%AE%E5%8E%8B%E7%BC%A9%E5%92%8C%20URL%20Encode/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+      <meta itemprop="name" content="反骨仔">
+      <meta itemprop="description" content="一个业余的 .NET Core 攻城狮">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="反骨仔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          07 HTTP 协议压缩和 URL Encode
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-09 00:00:00" itemprop="dateCreated datePublished" datetime="2020-01-09T00:00:00+08:00">2020-01-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-01-16 16:01:36" itemprop="dateModified" datetime="2021-01-16T16:01:36+08:00">2021-01-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8AHTTP-%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98%E3%80%8B/" itemprop="url" rel="index"><span itemprop="name">《HTTP 抓包实战》</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>HTTP 压缩是指 Web 服务器和浏览器之间压缩传输“ 文本内容” 的方法。HTTP 采用通用的压缩算法，比如用 gzip 来压缩 HTTP、JavaScript、css 文件，能大大减少网络传输的数据量，提高了用户显示网页的速度。当然，这同时也会增加一点点服务器的开销。</p>
+<a id="more"></a>
+<h1>7.1 HTTP 压缩的过程</h1>
+<ol>
+<li>浏览器发送 HTTP 请求给 Web 服务器，请求中的 Header 能 <code>Accept-Encoding: gzip</code>，deflate（告诉服务器，浏览器支持 gzip 压缩）。</li>
+<li>Web 服务器接到 HTTP 请求后，生成原始的 HTTP 响应，其中有原始的 Content-Type 和 Content-Length。</li>
+<li>Web 服务器通过 gzip 来对 HTTP 响应进行编码，编码后 Header 中有 Content-Type 和 Content-Length（压缩后的大小），并且增加了 <code>Content-Encoding:gzip</code>，然后把 HTTP 响应发送给浏览器</li>
+<li>浏览器接到 HTTP 响应后，根据 <code>Content-Encoding:gzip</code> 来对 HTTP 响应进行解码，获取到原始 HTTP 响应后显示出网页</li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109003334055.png" alt="image-20210109003334055"></p>
+<h2 id="7-1-1-实例-Fiddler-观察-HTTP-压缩">7.1.1 实例 Fiddler 观察 HTTP 压缩</h2>
+<p>我们可以使用 Fiddler 来捕获网站、 查看压缩。比如博客园就使用了 gzip 压缩。启动 Fiddler，在浏览器中打开 <a target="_blank" rel="noopener" href="https://www.cnblogs.com">https://www.cnblogs.com</a>，可以看到 HTTP 响应是乱码，并且出现了一个长长的黄色按钮 <code>Responsebody is encoded.Click to decode.</code>。单击这个按钮就可以解压 HTTP 响应。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109003617340.png" alt="image-20210109003617340"></p>
+<p>在 Fiddler 中，每次都要手动去 Decode 实在太麻烦。单击工具栏上的“ Decode ”按钮，就可以自动解压了。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109003651570.png" alt="image-20210109003651570"></p>
+<h1>7.1.2 内容编码类型</h1>
+<p>HTTP 定义了 一些标准的内容编码类型，并允许用扩展的形式添加更多的编码。</p>
+<p>Conte-Encoding header 就是用这些标准化的代号来说明编码时使用的算法。</p>
+<p>gzip 表明实体采用 GNU zip 编码 。</p>
+<p>compress 表明实体采用 UNIX 的文件压缩程序 。</p>
+<p>deflate 表明实体是用 zlib 的格式压缩的 。</p>
+<p>identity 表明没有对实体进行编码；当没有 Content-Encoding header 时，就默认为这种情况。</p>
+<p>gzip、compress 以及 deflate 编码都是无损压缩算法，用于减少传输报文的大小，不会导致信息损失。其中 gzip 通常效率最高，使用最为广泛。</p>
+<h2 id="7-1-3-压缩的好处">7.1.3 压缩的好处</h2>
+<p>减少了数据传输，节省了带宽资源。</p>
+<p>【实例】博客园首页压缩前的大小是 46171 bytes，压缩后的大小是 12082 bytes，只有原来的 35%，节省了 65% 的数据传输，从而大大提高了性能。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109003956583.png" alt="image-20210109003956583"></p>
+<h2 id="7-1-4-gzip-的不足之处">7.1.4 gzip 的不足之处</h2>
+<p>JPEG 这类文件用 gzip 压缩的效果不够好，gzip 占用了一些服务器和客户端的 CPU。</p>
+<h2 id="7-1-5-gzip-是如何压缩的">7.1.5 gzip 是如何压缩的</h2>
+<p>简单来说，gzip 压缩是在一个文本文件中找出类似的字符串，并临时替换它们，从而使整个文件变小。这种形式的压缩对 Web 来说非常适合，因为 HTML 和 css 文件通常包含大量重复的字符串，例如空格、标签。</p>
+<h2 id="7-1-6-HTTP-请求也是可以编码的">7.1.6 HTTP 请求也是可以编码的</h2>
+<p>浏览器一般不会对 HTTP 请求编码，但是一些程序在发送 HTTP 请求时会对其进行编码。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109004146924.png" alt="image-20210109004146924"></p>
+<h2 id="7-1-7-HTTP-内容编码和-HTTP-压缩的区别">7.1.7 HTTP 内容编码和 HTTP 压缩的区别</h2>
+<p>在 HTTP 协议中，可以对内容（也就是 Body 部分）进行编码，如可以采用 gzip 这样的编码，从而达到压缩的目的；也可以使用其他的编码方式把内容搅乱或加密，以此来防止未被授权的第三方看到文档的内容 。</p>
+<p>所以，我们说 HTTP 压缩其实就是 HTTP 内容编码的一种，不要把 HTTP 压缩和 HTTP 内容编码两个概念混淆了。</p>
+<h1>7.2 URL Encode 介绍</h1>
+<p>URL Encode (URL 编码）就是把所有非英文字母、数字字符都替换成百分号（%）后加两位十六进制数，比如空格的编码为“ %20”。</p>
+<h2 id="7-2-1-查询字符串中包含汉字">7.2.1 查询字符串中包含汉字</h2>
+<p>打开 Firefox 浏览器，输入网址：<a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=%E5%B0%8F%E5%9D%A6%E5%85%8B">https://www.baidu.com/s?wd=小坦克</a></p>
+<ul>
+<li>【注意】“小坦克”属于查询字符串，不属于网址路径</li>
+</ul>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109004526325.png" alt="image-20210109004526325"></p>
+<p>用 Fiddler 抓包，我们发现，实际的网址是 <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=%E5%B0%8F%E5%9D%A6%E5%85%8B">https://www.baidu.com/s?wd=小坦克</a></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109004612215.png" alt="image-20210109004612215"></p>
+<p>Firefox 自动把“小坦克”编码成了“ %E5%B0%8F%E5%9D%A6%E5%85%8B ”。</p>
+<h2 id="7-2-2-POST-中的数据包含汉字">7.2.2 POST 中的数据包含汉字</h2>
+<p>启动 Fiddler，在浏览器中打开 <a target="_blank" rel="noopener" href="https://account.cnblogs.com">https://account.cnblogs.com</a>，输入注册信息进行注册，这样我们能捕获到 POST 的一些数据。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109004727534.png" alt="image-20210109004727534"></p>
+<p>我们可以看到 body 里面的数据同样被编码了：“ ＠”转义成了“ %4。”，汉字也被转义成了“%E5%B0%8F%E5%9D%A6%E5%85%8B2 ” 。</p>
+<p>POST 中的主体在传输的时候同样会被转义。</p>
+<h1>7.3 Fiddler 中的 TextWizard</h1>
+<p>我们经常需要进行字符编码，比如把字符进行 URL Encode 或者 URL Decode 。 我们可以使用 TextWizard 来对字符编码。</p>
+<p>单击 Fiddler 工具栏 中的“ TextWizard ”，可以启动 TextWizard 小工具。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109004839664.png" alt="image-20210109004839664"></p>
+<h1>参考</h1>
+<ul>
+<li>《HTTP抓包实战》</li>
+</ul>
+<h1>修改</h1>
+<p>创建时间：2021–01-09 00:49</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/http/" rel="tag"># http</a>
+              <a href="/tags/%E6%8A%93%E5%8C%85/" rel="tag"># 抓包</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/08%20Fiddle%20%E4%BD%BF%E7%94%A8%E6%8A%80%E5%B7%A7/" rel="prev" title="08 Fiddle 使用技巧">
+      <i class="fa fa-chevron-left"></i> 08 Fiddle 使用技巧
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/06%20HTTP%20%E5%8D%8F%E8%AE%AE%E4%B8%AD%E7%9A%84%E7%BC%93%E5%AD%98/" rel="next" title="06 HTTP 协议中的缓存">
+      06 HTTP 协议中的缓存 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">7.1 HTTP 压缩的过程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#7-1-1-%E5%AE%9E%E4%BE%8B-Fiddler-%E8%A7%82%E5%AF%9F-HTTP-%E5%8E%8B%E7%BC%A9"><span class="nav-number">1.1.</span> <span class="nav-text">7.1.1 实例 Fiddler 观察 HTTP 压缩</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">7.1.2 内容编码类型</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#7-1-3-%E5%8E%8B%E7%BC%A9%E7%9A%84%E5%A5%BD%E5%A4%84"><span class="nav-number">2.1.</span> <span class="nav-text">7.1.3 压缩的好处</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-1-4-gzip-%E7%9A%84%E4%B8%8D%E8%B6%B3%E4%B9%8B%E5%A4%84"><span class="nav-number">2.2.</span> <span class="nav-text">7.1.4 gzip 的不足之处</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-1-5-gzip-%E6%98%AF%E5%A6%82%E4%BD%95%E5%8E%8B%E7%BC%A9%E7%9A%84"><span class="nav-number">2.3.</span> <span class="nav-text">7.1.5 gzip 是如何压缩的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-1-6-HTTP-%E8%AF%B7%E6%B1%82%E4%B9%9F%E6%98%AF%E5%8F%AF%E4%BB%A5%E7%BC%96%E7%A0%81%E7%9A%84"><span class="nav-number">2.4.</span> <span class="nav-text">7.1.6 HTTP 请求也是可以编码的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-1-7-HTTP-%E5%86%85%E5%AE%B9%E7%BC%96%E7%A0%81%E5%92%8C-HTTP-%E5%8E%8B%E7%BC%A9%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">2.5.</span> <span class="nav-text">7.1.7 HTTP 内容编码和 HTTP 压缩的区别</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">7.2 URL Encode 介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#7-2-1-%E6%9F%A5%E8%AF%A2%E5%AD%97%E7%AC%A6%E4%B8%B2%E4%B8%AD%E5%8C%85%E5%90%AB%E6%B1%89%E5%AD%97"><span class="nav-number">3.1.</span> <span class="nav-text">7.2.1 查询字符串中包含汉字</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-2-2-POST-%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E5%8C%85%E5%90%AB%E6%B1%89%E5%AD%97"><span class="nav-number">3.2.</span> <span class="nav-text">7.2.2 POST 中的数据包含汉字</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">7.3 Fiddler 中的 TextWizard</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">6.</span> <span class="nav-text">修改</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="反骨仔"
+      src="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+  <p class="site-author-name" itemprop="name">反骨仔</p>
+  <div class="site-description" itemprop="description">一个业余的 .NET Core 攻城狮</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/liqingwen2015" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;liqingwen2015" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://gitee.com/liqingwen" title="Gitee → https:&#x2F;&#x2F;gitee.com&#x2F;liqingwen" rel="noopener" target="_blank"><i class="fab fa-instagram fa-fw"></i>Gitee</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:liqingwen2013@outlook.com" title="E-Mail → mailto:liqingwen2013@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://669.icu/" title="http:&#x2F;&#x2F;669.icu" rel="noopener" target="_blank">技术总舵</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://toolbox.669.icu/" title="http:&#x2F;&#x2F;toolbox.669.icu" rel="noopener" target="_blank">Toolbox</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备20021676号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">反骨仔</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1279567760&web_id=1279567760"></script>
+  </div>
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="100" alpha="0.5" zIndex="-1" src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-ribbon@1/canvas-ribbon.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three-waves.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/canvas_lines.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

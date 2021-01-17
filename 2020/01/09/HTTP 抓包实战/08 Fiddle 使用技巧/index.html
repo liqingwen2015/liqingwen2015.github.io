@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/docker-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/docker-16x16.png">
+  <link rel="mask-icon" href="/images/docker.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.669.icu","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":true,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true},"motion":{"enable":true,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="这里介绍了常见的使用技巧。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="08 Fiddle 使用技巧">
+<meta property="og:url" content="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/08%20Fiddle%20%E4%BD%BF%E7%94%A8%E6%8A%80%E5%B7%A7/index.html">
+<meta property="og:site_name" content="反骨仔">
+<meta property="og:description" content="这里介绍了常见的使用技巧。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109012316668.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210116161624258.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109012505357.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109012835497.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109012912926.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109013025365.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109013056752.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210116162321980.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109013633172.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109013656273.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109013828261.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109013939527.png">
+<meta property="article:published_time" content="2020-01-08T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-17T04:50:39.618Z">
+<meta property="article:author" content="反骨仔">
+<meta property="article:tag" content="http">
+<meta property="article:tag" content="抓包">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109012316668.png">
+
+<link rel="canonical" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/08%20Fiddle%20%E4%BD%BF%E7%94%A8%E6%8A%80%E5%B7%A7/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>08 Fiddle 使用技巧 | 反骨仔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="反骨仔" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">反骨仔</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">一个业余的 .NET Core 攻城狮</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/liqingwen2015" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/08%20Fiddle%20%E4%BD%BF%E7%94%A8%E6%8A%80%E5%B7%A7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+      <meta itemprop="name" content="反骨仔">
+      <meta itemprop="description" content="一个业余的 .NET Core 攻城狮">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="反骨仔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          08 Fiddle 使用技巧
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-09 00:00:00" itemprop="dateCreated datePublished" datetime="2020-01-09T00:00:00+08:00">2020-01-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-01-17 12:50:39" itemprop="dateModified" datetime="2021-01-17T12:50:39+08:00">2021-01-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8AHTTP-%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98%E3%80%8B/" itemprop="url" rel="index"><span itemprop="name">《HTTP 抓包实战》</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>这里介绍了常见的使用技巧。</p>
+<a id="more"></a>
+<h1>8.1 Fiddler 和其它抓包软件的比较</h1>
+<p>与 Fiddler 同类的抓包软件还有 Charles 、Firebug 、Wireshark、HTTPWatch 等。</p>
+<p>优势：</p>
+<ol>
+<li>Fiddler 可以通过 FiddlerScript 写脚本来扩展功能，Charles 则不能</li>
+<li>使用 Charles 要付费 ，Fiddler 可免费使用</li>
+<li>Charles 是跨平台的（Windows 、Mac 、Linux)，Fiddler 现在同样也是跨平台的了( Windows 、 Mac、Linux）。</li>
+<li>HTTPWatch 也是比较常见的 HTTP 抓包工具 ，但是只支持 IE 和 Firefox 浏览器 ，而且不能修改 HTTP 包</li>
+<li>Wireshark 支持更多的协议，主要是用来监昕 TCP/IP 协议，直接与网卡进行数据报文交互
+<ul>
+<li>如果用 Wireshark 来监控 HTTP 协议， 就有点大材小用，而且不方便</li>
+</ul>
+</li>
+</ol>
+<h1>8.2 Fiddler 抓不到包应该怎么解决</h1>
+<p>如果 Fiddler 不能捕获数据包，可以尝试：</p>
+<ol>
+<li>先确定是 HTTP 包抓不到，还是 HTTPS 包抓不到
+<ul>
+<li>如果只是 HTTPS 包抓不到，说明是证书的问题，需要重新安装证书</li>
+</ul>
+</li>
+<li>检查浏览器的 HTTP 代理设置是否正确，或者换个浏览器试试</li>
+<li>检查 Fiddler 的捕获开关是否打开</li>
+<li>检查过滤的设置</li>
+<li>确定是否是捕获 Localhost 的流量</li>
+</ol>
+<h1>8.3 如何找到想抓的包</h1>
+<p>启动 Fiddler, Web Sessions 列表就会抓到很多 HTTP 请求，我们需要找的 HTTP 请求被淹没其中。</p>
+<p>我们在抓包之前，可以先把 Web Sessions 列表清空，然后再操作，这样 Web Sessions 中抓到的 HTTP 请求就会少很多。</p>
+<p>有以下几种方法可以清空 Web Session 列表。</p>
+<ol>
+<li>第一种方法：Fiddler 菜单栏上有一个 × 图标，单击小箭头后会看到“ Remove all“，选项，选此即可以清空 Web Session 列表 。</li>
+<li>第二种方法：单击 Web Session 列表中的任何一个 HTTP 请求，并按快捷键【 CTRL+X 】。</li>
+<li>第三种方法：在 QuickExec 命令行工具中输入命令“ cls ”，按回车键，也可以清空 Web Sessions 列表。</li>
+</ol>
+<p>抓到自己想要的包后，应该让 Fiddler 暂停抓包，这样就不会因为抓到一些不相干的包而被干扰了。</p>
+<h1>8.4 Fiddler 异常退出后无法上网</h1>
+<p>电脑意外死机，Fiddler 异常退出后会导致电脑无法上网。原因是 Fiddler 异常退出后，没有注销代理，系统的代理仍然是 127.0.0.1 ，端口号是 8888 。</p>
+<p>解决的办法是重新启动 Fiddler 再关闭，这样浏览器就能上网了。</p>
+<h1>8.5 Fiddler 排序</h1>
+<p>Fiddler 中的 Web Session 默认是按照序号排序的，可能某种误操作会让 Web Session 按照别的标准排序，导致用户找不到抓的包。</p>
+<p>我们可以单击“序号”的列名，重新按照序号来排序。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109012316668.png" alt="image-20210109012316668"></p>
+<h1>8.6 Fiddler 中查询会话</h1>
+<p>在菜单栏中单击 Edit -&gt; Find Sessions ，或者用快捷键【Ctrl + F】打开“ Find Sessions”的对话框，输入关键宇查询你要的会话。查询到的会话会以黄色显示。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210116161624258.png" alt="image-20210116161624258"></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109012505357.png" alt="image-20210109012505357"></p>
+<p>【注意】汉字或者特殊字符很可能查询不到，因为在 HTTP 请求中，汉字或者特殊字符被转义了。</p>
+<h1>8.7 Fiddler 中保存抓到的包</h1>
+<p>有些时候我们 需要把会话保存下来，以便发给别人或者以后去分析。保存会话的步骤如下：</p>
+<ol>
+<li>选择你想保存的会话，然后单击 File -&gt; Save -&gt; Selected Sessions。保存后的文件后缀名是 .saz。文件中会保存完整的 HTTP 请求和 HTTP 响应；</li>
+<li>双击 .saz 文件，或者单击 Fiddler 菜单栏中的 File -&gt; Load Archive，就能打开 . saz 文件。</li>
+</ol>
+<h1>8.8 Fiddler 中编辑会话</h1>
+<p>默认的情况下，Fiddler 中的 Session 是不能编辑的。</p>
+<p>选择一个 Session，用鼠标右键选择“ Unlock For Editing&quot;（快捷键是【F2】），这样就可以在 Inspectors 的 Raw 模式下编辑 HTTP 请求和 HTTP 响应 。</p>
+<h1>8.9 过滤会活</h1>
+<p>每次启动 Fiddler，打开一个网页，都能看到几十个会话，看得人眼花缭乱。这时候我们可以使用 Filter 的功能来过滤，使网页只显示自己想要的 HTTP 请求。</p>
+<p>在 Fiddler 中找到 Filters 选项卡，选中“ Use Filters ”，就可以启动过滤功能。</p>
+<p>Filters 的 Actions 中，我们可以保存好当前的过滤配置，也可以加载己经保存好的过滤配置。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109012835497.png" alt="image-20210109012835497"></p>
+<h1>8.10 常用快捷键</h1>
+<p>Fiddler 中的 Web Sessions 是我们用得最多的地方。通常我们必须选择 Web Sessions 中的 Session，然后做其他的操作。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109012912926.png" alt="image-20210109012912926"></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109013025365.png" alt="image-20210109013025365"></p>
+<h1>8.11 QuickExec 命令行的使用</h1>
+<p>Fiddler 的左下角有一个命令行工具叫作 QuickExec，允许你直接输入命令。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109013056752.png" alt="image-20210109013056752"></p>
+<p>常见的命令：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>help</td>
+<td>打开官方的使用页面介绍，所有的命令都会列出来</td>
+</tr>
+<tr>
+<td>cls</td>
+<td>清屏（【Ctrl+X】快捷键也可以清屏）</td>
+</tr>
+<tr>
+<td>select</td>
+<td>选择会话的命令</td>
+</tr>
+<tr>
+<td>?.png</td>
+<td>用来选择 .png 后缀的图片</td>
+</tr>
+<tr>
+<td>bpu</td>
+<td>截获 request</td>
+</tr>
+</tbody>
+</table>
+<p>还可以用“ urlreplace <a target="_blank" rel="noopener" href="http://www.tank-dev.com">www.tank-dev.com</a> <a target="_blank" rel="noopener" href="http://www.tank-demo.com">www.tank-demo.com</a> ”替换掉 host</p>
+<p>我们最初发送给 A 站点的 HTTP 请求，都被 Fiddler 转发到 B 站点，而在浏览器中毫无感觉 。 测试或者 debug 过程中经常会有这种需求。</p>
+<h1>8.12 Fiddler 比较会话的不同</h1>
+<p>如果需要比较两个 Session 的内容的不同，我们可以使用 Windiff 工具。具体操作步骤如下 。</p>
+<ol>
+<li>下载 WinDiff</li>
+<li>在 Fiddler 中设置 Compare 工具为 WinDiff。启动 Fiddler ，在菜单栏中单击 Tools -&gt; Fiddler Options ，在 Tools 选项卡中选择 WinDiff 的路径</li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210116162321980.png" alt="image-20210116162321980"></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109013633172.png" alt="image-20210109013633172"></p>
+<ol start="3">
+<li>选中两个会话，用鼠标右键选择 Compare ，就可以使用 WinDiff 来比较两个会话的不同了</li>
+</ol>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109013656273.png" alt="image-20210109013656273"></p>
+<h1>8.13 Fiddler 插件</h1>
+<p>Fiddler 的插件下载地址是：<a target="_blank" rel="noopener" href="http://www.telerik.com/fiddler/add-ons">http://www.telerik.com/fiddler/add-ons</a> 。</p>
+<h2 id="8-13-1-JavaScript-Formatter">8.13.1 JavaScript Formatter</h2>
+<p>从服务器返回来的 JavaScript 代码都没有格式化 。 利用 Java Script Formatter 插件可以格式化 JavaScript 代码，增加可读性。</p>
+<p>安装好 Java Script Formatter 插件后，在 Fiddler 中选择一个 Session，用鼠标右键选择“ Make JavaScript Pretty ”，就可以格式化  JavaScript 代码了。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109013828261.png" alt="image-20210109013828261"></p>
+<h2 id="8-13-2-Gallery-插件">8.13.2 Gallery 插件</h2>
+<p>选择很多图片的会话后，Gallery 插件可以显示这些图片的缩略图。</p>
+<p>假如所有的插件都不能满足你的需求，那么你只能自己开发插件了 。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210109013939527.png" alt="image-20210109013939527"></p>
+<h1>参考</h1>
+<ul>
+<li>《HTTP抓包实战》</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/http/" rel="tag"># http</a>
+              <a href="/tags/%E6%8A%93%E5%8C%85/" rel="tag"># 抓包</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/04%20HTTP%20%E5%8D%8F%E8%AE%AE%20Header%20%E4%BB%8B%E7%BB%8D/" rel="prev" title="04 HTTP 协议 Header 介绍">
+      <i class="fa fa-chevron-left"></i> 04 HTTP 协议 Header 介绍
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/07%20HTTP%20%E5%8D%8F%E8%AE%AE%E5%8E%8B%E7%BC%A9%E5%92%8C%20URL%20Encode/" rel="next" title="07 HTTP 协议压缩和 URL Encode">
+      07 HTTP 协议压缩和 URL Encode <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">8.1 Fiddler 和其它抓包软件的比较</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">8.2 Fiddler 抓不到包应该怎么解决</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">8.3 如何找到想抓的包</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">8.4 Fiddler 异常退出后无法上网</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">5.</span> <span class="nav-text">8.5 Fiddler 排序</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">6.</span> <span class="nav-text">8.6 Fiddler 中查询会话</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">7.</span> <span class="nav-text">8.7 Fiddler 中保存抓到的包</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">8.</span> <span class="nav-text">8.8 Fiddler 中编辑会话</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">9.</span> <span class="nav-text">8.9 过滤会活</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">10.</span> <span class="nav-text">8.10 常用快捷键</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">11.</span> <span class="nav-text">8.11 QuickExec 命令行的使用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">12.</span> <span class="nav-text">8.12 Fiddler 比较会话的不同</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">13.</span> <span class="nav-text">8.13 Fiddler 插件</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#8-13-1-JavaScript-Formatter"><span class="nav-number">13.1.</span> <span class="nav-text">8.13.1 JavaScript Formatter</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-13-2-Gallery-%E6%8F%92%E4%BB%B6"><span class="nav-number">13.2.</span> <span class="nav-text">8.13.2 Gallery 插件</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">14.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="反骨仔"
+      src="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+  <p class="site-author-name" itemprop="name">反骨仔</p>
+  <div class="site-description" itemprop="description">一个业余的 .NET Core 攻城狮</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/liqingwen2015" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;liqingwen2015" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://gitee.com/liqingwen" title="Gitee → https:&#x2F;&#x2F;gitee.com&#x2F;liqingwen" rel="noopener" target="_blank"><i class="fab fa-instagram fa-fw"></i>Gitee</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:liqingwen2013@outlook.com" title="E-Mail → mailto:liqingwen2013@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://669.icu/" title="http:&#x2F;&#x2F;669.icu" rel="noopener" target="_blank">技术总舵</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://toolbox.669.icu/" title="http:&#x2F;&#x2F;toolbox.669.icu" rel="noopener" target="_blank">Toolbox</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备20021676号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">反骨仔</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1279567760&web_id=1279567760"></script>
+  </div>
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="100" alpha="0.5" zIndex="-1" src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-ribbon@1/canvas-ribbon.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three-waves.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/canvas_lines.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

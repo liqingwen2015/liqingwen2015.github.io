@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/docker-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/docker-16x16.png">
+  <link rel="mask-icon" href="/images/docker.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.669.icu","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":true,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true},"motion":{"enable":true,"async":true,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="它是 Web 开发中 一个很重要的客户端数据来源，而且它可以实现扩展性很好的会话状态，并且通过使用 Fiddler 来捕获 Web 登录时的 HTTP 数据包来了解登录的原理 。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="11 深入理解 Cookie 机制">
+<meta property="og:url" content="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/11%20%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Cookie%20%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="反骨仔">
+<meta property="og:description" content="它是 Web 开发中 一个很重要的客户端数据来源，而且它可以实现扩展性很好的会话状态，并且通过使用 Fiddler 来捕获 Web 登录时的 HTTP 数据包来了解登录的原理 。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110143618461.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110143631497.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110143758947.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110144132912.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210116203154194.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110144510162.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110144742949.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110145719423.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110145740702.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110145843541.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110145923058.png">
+<meta property="og:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110150156545.png">
+<meta property="article:published_time" content="2020-01-08T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-01-16T12:35:44.629Z">
+<meta property="article:author" content="反骨仔">
+<meta property="article:tag" content="http">
+<meta property="article:tag" content="抓包">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110143618461.png">
+
+<link rel="canonical" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/11%20%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Cookie%20%E6%9C%BA%E5%88%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>11 深入理解 Cookie 机制 | 反骨仔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="反骨仔" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">反骨仔</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">一个业余的 .NET Core 攻城狮</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/liqingwen2015" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://blog.669.icu/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/11%20%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20Cookie%20%E6%9C%BA%E5%88%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+      <meta itemprop="name" content="反骨仔">
+      <meta itemprop="description" content="一个业余的 .NET Core 攻城狮">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="反骨仔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          11 深入理解 Cookie 机制
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-09 00:00:00" itemprop="dateCreated datePublished" datetime="2020-01-09T00:00:00+08:00">2020-01-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-01-16 20:35:44" itemprop="dateModified" datetime="2021-01-16T20:35:44+08:00">2021-01-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E3%80%8AHTTP-%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98%E3%80%8B/" itemprop="url" rel="index"><span itemprop="name">《HTTP 抓包实战》</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>它是 Web 开发中 一个很重要的客户端数据来源，而且它可以实现扩展性很好的会话状态，并且通过使用 Fiddler 来捕获 Web 登录时的 HTTP 数据包来了解登录的原理 。</p>
+<a id="more"></a>
+<h1>11.1 HTTP 协议是无状态的</h1>
+<p>对于浏览的每一次请求，服务器都会独立处理，不与之前或之后的请求发生关联。</p>
+<p>即使是同一个浏览器发送 了 3 个请求，服务器也会独立处理这 3 个请求 ，服务器并不知道这 3 个请求是来自同 一个浏览器 。</p>
+<p>服务器需要识别浏览器请求，就必须弄清楚浏览器的请求状态。既然 HTTP 协议是无状态的，那就让服务器和浏览器共同维护一个状态，这就是会话机制。</p>
+<h1>11.2 会话机制</h1>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110143618461.png" alt="image-20210110143618461"></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110143631497.png" alt="image-20210110143631497"></p>
+<ol>
+<li>浏览器第一次请求服务器时，服务器创建一个会话，并将会话的 id 作为响应的一部分发送给浏览器</li>
+<li>浏览器存储会话 id，并在后续第二次和第三次请求中带上会话 id。服务器取得请求中的会话 id 就知道是不是同一个用户了</li>
+</ol>
+<p>这样一来，后续请求与第一次请求就产生了关联。</p>
+<h1>11.3 Cookie 机制</h1>
+<p>服务器在内存中保存会话对象。浏览器可以使用 Cookie 机制保存会话 id。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110143758947.png" alt="image-20210110143758947"></p>
+<p>Cookie 机制是一种会话机制。Cookie 是浏览器用来存储少量数据的一种机制，数据以“key=value ”形式存储，浏览器发送 HTTP 请求时 ，自动附带 cookie 信息。</p>
+<h1>11.4 Cookie 是什么</h1>
+<p>Cookie 是一小段文本信息，伴随着用户请求和页面在浏览器和 Web 服务器之间传递。</p>
+<p>Cookie 是一种 HTTP Header，以“key=value”的形式组成，比如 ip_country=CN。</p>
+<p>两个 Cookie 之间用分号隔开，比如 ip_country=CN; mbox=check#true#1499311989。</p>
+<p>浏览器把 Cookie 通过 HTTP 请求中的 Header，比如“ Cookie: ip_country=CN“发送给 Web 服务器。Web 服务器通过 HTTP 响应中的 Header，比如“ Set-Cookie: ip_country=CN ”，把 Cookie 发送给浏览器 。</p>
+<p>使用 Fiddler 可以清楚地看到 Cookie 在浏览器和服务器之间传递的过程。Fiddler 工具中可以清晰地看到 HTTP 请求中的 Cookie 和 HTTP 响应中的 Cookie 。</p>
+<p>【实例】启动 Fiddler，打开浏览器访问一些购物网站</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110144132912.png" alt="image-20210110144132912"></p>
+<h1>11.5 Cookie 的作用</h1>
+<p>Cookie 最主要的作用是用来做用户认证，还可以用于保存用户的一些其他信息。</p>
+<p>Cookie 也可以用于互联网精准广告定向技术，比如用户浏览了某些商品，就可以用 Cookie 将其记录下来，对网民所有的上网行为进行个性化的深度分析：按广告主需求锁定目标受众，进行一对一传播，提供多通道投放，按照效果付费。</p>
+<h1>11.6 抓包观察上海科技馆网站的登录</h1>
+<p>我们通过 Fiddler 来抓包观察上海科技馆网站的登录，来理解登录的过程和 Cookie 机制。</p>
+<p>第一步：启动 Fiddler，启动浏览器，打开 <a target="_blank" rel="noopener" href="http://piaoweb.sstm.org.cn/%EF%BC%9B%E8%BE%93%E5%85%A5%E7%94%A8">http://piaoweb.sstm.org.cn/；输入用</a> 户名和密码 ，单击登录（请读者自己注册账号）。</p>
+<p>抓包后可以看到浏览器把用户名和密码发送给了 Web 服务器</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210116203154194.png" alt="image-20210116203154194"></p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110144510162.png" alt="image-20210110144510162"></p>
+<p>Web 服务器会验证用户名和密码的正确性，然后通过“ Set-Cookie ＂ 给浏览器发送 3 个 Cookie，其中一个是用来保存登录信息的 。</p>
+<p>第二步：在浏览器中打开“用户中心”：<a target="_blank" rel="noopener" href="http://piaoweb.sstm.org.cn/user/center/orderlist%E3%80%82">http://piaoweb.sstm.org.cn/user/center/orderlist。</a></p>
+<p>抓包后可以看到，HTTP 请求中会带上 Cookie（即在上一步中 Web 服务器返回的 Cookie），这样 Web 服务器就认为浏览器是登录状态。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110144742949.png" alt="image-20210110144742949"></p>
+<h1>11.7 Cookie 的属性</h1>
+<p>从 Fiddler 的抓包中，我们可以看到 Web 服务器返回了下面这一段数据给浏览器。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Set-Cookie: cookie_user_token&#x3D;C5CBD6FBDODAOEE4B5DC36E7075D8CDA; Expires&#x3D;Thu,06-Jul-2017 09:17:46 GMT;Path&#x3D;&#x2F;;HttpOnly</span><br></pre></td></tr></table></figure>
+<ol>
+<li>
+<p>Expires 属性：Expires 的值是一个时间，代表过期时间 。过了这个时间， 该 Cookie 就失效了。</p>
+<p>如果不指定 Expire time ， 表示关闭浏览器/页面的时候 ， 此 Cookie 就应该被浏览器删除了。</p>
+</li>
+<li>
+<p>Path 属性：表示 Cookie 所属 的路径，<a target="_blank" rel="noopener" href="http://asp.net">asp.net</a> 默认为“／”，就是根目录 。在同一个服务器上的目录如下： ／test／ 、 ／test/cd人／test/dd/ 。 现假设一个 Cookiel 的 path 为 /test/ , Cookie2 的 path 为 /test/cd/，那么 test 下的所有页面都可以访问到 Cookiel ，而／test/dd/的子页面不能访问 cookie2 。这是因为 Cookie 只能让其 path 路径下的页面访问。</p>
+</li>
+<li>
+<p>HttpOnly 属性：这是个关于安全方面的属性，将一个 Cookie 设置为 HttpOnly 后 ，通过 Javascript 脚本将无法读取到 Cookie 信息，这能有效地防止黑客用 xss 发起攻击</p>
+</li>
+</ol>
+<p>【注意】一般来说，跟登录相关的 Cookie 必须设置为 HttpOnly。</p>
+<h1>11.8 Cookie 的分类</h1>
+<p>我们可以大致把 Cookie 分为 2 类：会话 Cookie 和持久 Cookie。</p>
+<p>会话 Cookie 是一种临时的 cookie，它记录了用户访问站点时的设置和偏好；关闭浏览器，会话 Cookie 就被删除了。</p>
+<p>持久 Cookie 存储在硬盘上 ，不管浏览器退出或者计算机重启，持久 cookie 都继续存在。持久 Cookie 有过期时间。</p>
+<h1>11.9 Cookie 保存在哪里</h1>
+<p>Cookie 是存在硬盘上的，IE 存 Cookie 的地方和 Firefox 存 Cookie 的地方不一样 。 不同的操作系统存 Cookie 的地方也可能不一样。</p>
+<p>不同的浏览器会在各自的独立空间存放 Cookie ，互不干涉。</p>
+<p>以 Windows7 、IE8 为例，Cookie 的存放路径为  <code>C:\Users\xiaoj\AppData\Local\Microso\Windows\Temporary Internet Files</code>。</p>
+<p>【注意】缓存文件和 cookie 文件是存在一起的，都在这个目录下。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110145719423.png" alt="image-20210110145719423"></p>
+<p>不同的网站会有不同的 Cookie 文件：</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110145740702.png" alt="image-20210110145740702">#</p>
+<h1>11.10 使用和禁用 Cookie</h1>
+<p>可以在 IE 浏览器中设置禁用 Cookie 。 打开控制面板中的 Internet 选项，选择隐私选项卡。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110145843541.png" alt="image-20210110145843541"></p>
+<h1>11.11 网站自动登录的原理</h1>
+<p>很多网站都有自动登录的功能 ， 我们以 “博客园自动登录”为例来说明 Cookie 是如何传递的。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110145923058.png" alt="image-20210110145923058"></p>
+<p>在登录页面输入用户名、密码，选择保存密码单击登录（这时候，其实在你的机器上己保存好了登录的 Cookie ，可以按照上节介绍的方法去你的计算机上找一下博客园的（Cookie）。</p>
+<p>我们下次访问博客园的流程如下：</p>
+<ol>
+<li>用户打开 IE 浏览器，在地址栏输入 <a target="_blank" rel="noopener" href="http://www.cnblogs.com">http://www.cnblogs.com</a></li>
+<li>IE 首先会在硬盘中查找关于 <a target="_blank" rel="noopener" href="http://cnblogs.com">cnblogs.com</a> 的 Cookie，然后把 Cookie 放到 HTTP Request 中，再把 Request 发给 Web 服务器</li>
+<li>Web 服务器返回博客园首页，这时你会看到自己已经登录了。</li>
+</ol>
+<h1>11.12 Cookie 和文件缓存的区别</h1>
+<p>【提示】很多人会把 Cookie 和文件缓存弄混淆，这是两个完全不一样的东西。唯一的相同之处可能是它们俩都存在硬盘上，而且存在同一个文件夹下 。</p>
+<p>我们可以在 IE 中分别选择删除 Cookie 和缓存文件。</p>
+<p><img data-src="https://note-sh-1304201078.file.myqcloud.com/images/image-20210110150156545.png" alt="image-20210110150156545"></p>
+<h1>11.13 Cookie 泄露隐私</h1>
+<p>很多不法公司利用 Cookie 跟踪并采集用户的个人信息，并转卖给网络广告商，形成了 一条窃取用户信息的灰色产业链。</p>
+<h1>参考</h1>
+<p>《HTTP抓包实战》</p>
+<h1>修订</h1>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/http/" rel="tag"># http</a>
+              <a href="/tags/%E6%8A%93%E5%8C%85/" rel="tag"># 抓包</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/12%20Fiddler%20%E5%AE%9E%E7%8E%B0%20Cookie%20%E5%8A%AB%E6%8C%81%E6%94%BB%E5%87%BB/" rel="prev" title="12 Fiddler 实现 Cookie 劫持攻击">
+      <i class="fa fa-chevron-left"></i> 12 Fiddler 实现 Cookie 劫持攻击
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/01/09/HTTP%20%E6%8A%93%E5%8C%85%E5%AE%9E%E6%88%98/10%20Fiddler%20%E7%9A%84%20Script%20%E7%94%A8%E6%B3%95/" rel="next" title="10 Fiddler 的 Script 用法">
+      10 Fiddler 的 Script 用法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">11.1 HTTP 协议是无状态的</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">11.2 会话机制</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">11.3 Cookie 机制</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">4.</span> <span class="nav-text">11.4 Cookie 是什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">5.</span> <span class="nav-text">11.5 Cookie 的作用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">6.</span> <span class="nav-text">11.6 抓包观察上海科技馆网站的登录</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">7.</span> <span class="nav-text">11.7 Cookie 的属性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">8.</span> <span class="nav-text">11.8 Cookie 的分类</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">9.</span> <span class="nav-text">11.9 Cookie 保存在哪里</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">10.</span> <span class="nav-text">11.10 使用和禁用 Cookie</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">11.</span> <span class="nav-text">11.11 网站自动登录的原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">12.</span> <span class="nav-text">11.12 Cookie 和文件缓存的区别</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">13.</span> <span class="nav-text">11.13 Cookie 泄露隐私</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">14.</span> <span class="nav-text">参考</span></a></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-number">15.</span> <span class="nav-text">修订</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="反骨仔"
+      src="https://website-sh-1304201078.file.myqcloud.com/images/qrcode-header.jpg">
+  <p class="site-author-name" itemprop="name">反骨仔</p>
+  <div class="site-description" itemprop="description">一个业余的 .NET Core 攻城狮</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/liqingwen2015" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;liqingwen2015" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://gitee.com/liqingwen" title="Gitee → https:&#x2F;&#x2F;gitee.com&#x2F;liqingwen" rel="noopener" target="_blank"><i class="fab fa-instagram fa-fw"></i>Gitee</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:liqingwen2013@outlook.com" title="E-Mail → mailto:liqingwen2013@outlook.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://669.icu/" title="http:&#x2F;&#x2F;669.icu" rel="noopener" target="_blank">技术总舵</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://toolbox.669.icu/" title="http:&#x2F;&#x2F;toolbox.669.icu" rel="noopener" target="_blank">Toolbox</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备20021676号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">反骨仔</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1279567760&web_id=1279567760"></script>
+  </div>
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script size="100" alpha="0.5" zIndex="-1" src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-ribbon@1/canvas-ribbon.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three-waves.min.js"></script>
+    <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/canvas_lines.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
